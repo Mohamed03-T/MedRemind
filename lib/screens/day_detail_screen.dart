@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../models/medication.dart';
 import '../providers/calendar_provider.dart';
 import 'medication_detail_screen.dart';
@@ -18,6 +19,7 @@ class DayDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Hero(
@@ -31,7 +33,7 @@ class DayDetailScreen extends StatelessWidget {
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    DateFormat.yMMMMd('ar').format(date),
+                    DateFormat.yMMMMd(l10n.localeName).format(date),
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   background: Container(
@@ -52,19 +54,24 @@ class DayDetailScreen extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       if (occurrences.isEmpty) {
-                        return Center(child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          child: Text(
-                            'لا يوجد مهام لهذا اليوم', 
-                            style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              l10n.noTasks,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
+                            ),
                           ),
-                        ));
+                        );
                       }
-                      
+
                       // Sort occurrences by time
                       final sortedOccs = List<DoseOccurrence>.from(occurrences)
                         ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
-                      
+
                       final occ = sortedOccs[index];
                       final med = occ.medication;
 
@@ -73,7 +80,7 @@ class DayDetailScreen extends StatelessWidget {
                           final int timesTaken = cal.completionsFor(date, med.id!);
                           final int medOccurrenceIndex = sortedOccs.sublist(0, index).where((o) => o.medication.id == med.id).length;
                           final bool isDone = medOccurrenceIndex < timesTaken;
-                          
+
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
@@ -112,16 +119,16 @@ class DayDetailScreen extends StatelessWidget {
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (ctx) => AlertDialog(
-                                        title: const Text('تأكيد'),
-                                        content: const Text('لم يحن وقت هذه الجرعة بعد. هل تريد شطبها على أي حال؟'),
+                                        title: Text(l10n.confirm),
+                                        content: Text(l10n.notTimeYetQuery),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.of(ctx).pop(false),
-                                            child: const Text('إلغاء'),
+                                            child: Text(l10n.cancel),
                                           ),
                                           TextButton(
                                             onPressed: () => Navigator.of(ctx).pop(true),
-                                            child: const Text('شطب'),
+                                            child: Text(l10n.log),
                                           ),
                                         ],
                                       ),
@@ -192,7 +199,7 @@ class DayDetailScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              trailing: isDone 
+                              trailing: isDone
                                   ? const Icon(Icons.check_circle, color: Colors.green, size: 28)
                                   : const Icon(Icons.pending_actions, color: Colors.orange, size: 28),
                             ),
@@ -211,3 +218,4 @@ class DayDetailScreen extends StatelessWidget {
     );
   }
 }
+

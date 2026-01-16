@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../models/medication.dart';
 import '../providers/calendar_provider.dart';
 
@@ -11,9 +12,10 @@ class MedicationDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تفاصيل الدواء'),
+        title: Text(l10n.medicationDetails),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -37,62 +39,62 @@ class MedicationDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             
-            _buildSectionHeader(context, 'المعلومات الأساسية', Icons.info_outline),
+            _buildSectionHeader(context, l10n.stepBasicInfo, Icons.info_outline),
             _buildDetailCard(
               context,
-              title: 'اسم الدواء',
+              title: l10n.medicationName,
               value: medication.name,
               icon: Icons.label,
             ),
             _buildDetailCard(
               context,
-              title: 'الجرعة',
+              title: l10n.dosage,
               value: medication.dosage,
               icon: Icons.scale,
             ),
             
             const SizedBox(height: 16),
-            _buildSectionHeader(context, 'المواعيد والتكرار', Icons.schedule),
+            _buildSectionHeader(context, l10n.medicationSchedule, Icons.schedule),
             if (medication.year != null && medication.month != null && medication.day != null)
               _buildDetailCard(
                 context,
-                title: 'تاريخ لبداية',
+                title: l10n.doseDate,
                 value: '${medication.year}/${medication.month}/${medication.day}',
                 icon: Icons.event,
               ),
             _buildDetailCard(
               context,
-              title: 'وقت التذكير',
+              title: l10n.firstDoseTime,
               value: medication.timeText.split(' ').last, // Just the time part
               icon: Icons.access_time,
             ),
             _buildDetailCard(
               context,
-              title: 'نظام التكرار',
-              value: _getFrequencyText(medication),
+              title: l10n.dosingSchedule,
+              value: _getFrequencyText(context, medication),
               icon: Icons.repeat,
             ),
             if (medication.endDate != null)
               _buildDetailCard(
                 context,
-                title: 'تاريخ الانتهاء المتوقع',
+                title: l10n.stopDate,
                 value: medication.endDate!,
                 icon: Icons.calendar_today,
               ),
               
             const SizedBox(height: 16),
-            _buildSectionHeader(context, 'الإعدادات والمخزون', Icons.settings_outlined),
+            _buildSectionHeader(context, l10n.dosageAndStock, Icons.settings_outlined),
             if (medication.totalPills != null)
               _buildDetailCard(
                 context,
-                title: 'إجمالي الكمية المتوفرة',
+                title: l10n.stockAmount,
                 value: medication.totalPills.toString(),
                 icon: Icons.inventory,
               ),
             _buildDetailCard(
               context,
-              title: 'صوت التنبيه',
-              value: medication.sound ?? 'النغمة الافتراضية',
+              title: l10n.notificationSound,
+              value: medication.sound ?? l10n.defaultSound,
               icon: Icons.volume_up,
             ),
 
@@ -114,13 +116,13 @@ class MedicationDetailScreen extends StatelessWidget {
                     onPressed: () {
                       calProvider.addOccurrenceCompletion(now, medication.id!);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('تم تسجيل أخذ الجرعة بنجاح')),
+                        SnackBar(content: Text(l10n.doseLogged)),
                       );
                     },
                     icon: const Icon(Icons.check_circle),
-                    label: const Text(
-                      'تسجيل أخذ الجرعة الآن',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    label: Text(
+                      l10n.logDoseNow,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 );
@@ -136,7 +138,7 @@ class MedicationDetailScreen extends StatelessWidget {
   Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12, right: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
@@ -188,25 +190,28 @@ class MedicationDetailScreen extends StatelessWidget {
     );
   }
 
-  String _getFrequencyText(Medication med) {
-    if (med.frequency == 'Daily') return 'يومياً';
-    if (med.frequency == 'Weekly') return 'أسبوعياً';
-    if (med.frequency == 'Interval') {
-      return 'كل ${med.interval} ${_getIntervalUnitText(med.intervalUnit)}';
+  String _getFrequencyText(BuildContext context, Medication med) {
+    final l10n = AppLocalizations.of(context)!;
+    if (med.frequency == 'Daily' || med.frequency == 'daily') return l10n.daily;
+    if (med.frequency == 'Weekly' || med.frequency == 'weekly') return l10n.weekly;
+    if (med.frequency == 'Interval' || med.interval != null) {
+      return '${l10n.every} ${med.interval} ${_getIntervalUnitText(context, med.intervalUnit)}';
     }
     return med.frequency;
   }
 
-  String _getIntervalUnitText(String? unit) {
+  String _getIntervalUnitText(BuildContext context, String? unit) {
+    final l10n = AppLocalizations.of(context)!;
     switch (unit) {
       case 'minutes':
-        return 'دقائق';
+        return l10n.minutes;
       case 'hours':
-        return 'ساعات';
+        return l10n.hours;
       case 'days':
-        return 'أيام';
+        return l10n.days;
       default:
         return unit ?? '';
     }
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../providers/medication_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../models/medication.dart';
@@ -64,6 +65,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final theme = Theme.of(context);
     final meds = Provider.of<MedicationProvider>(context).medications;
     final cal = Provider.of<CalendarProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
 
     final first = DateTime(_focusedDate.year, _focusedDate.month, 1);
     final daysInMonth = DateUtils.getDaysInMonth(_focusedDate.year, _focusedDate.month);
@@ -225,9 +228,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                       color: Colors.black.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
-                                      'اليوم',
-                                      style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                    child: Text(
+                                      l10n.today,
+                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                                     ),
                                   )
                                 else
@@ -283,7 +286,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         elevation: 0,
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         title: Text(
-          DateFormat.yMMMM('ar').format(_focusedDate),
+          DateFormat.yMMMM(locale).format(_focusedDate),
           style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
@@ -291,12 +294,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.chevron_right, color: theme.colorScheme.primary),
+          icon: Icon(locale == 'ar' ? Icons.chevron_right : Icons.chevron_left, color: theme.colorScheme.primary),
           onPressed: _prevMonth,
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.chevron_left, color: theme.colorScheme.primary),
+            icon: Icon(locale == 'ar' ? Icons.chevron_left : Icons.chevron_right, color: theme.colorScheme.primary),
             onPressed: _nextMonth,
           ),
         ],
@@ -357,3 +360,4 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
+

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../models/medication.dart';
 import '../providers/medication_provider.dart';
+import '../providers/settings_provider.dart';
 
 class AddMedicationScreen extends StatefulWidget {
   const AddMedicationScreen({super.key});
@@ -39,10 +41,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   String _selectedSound = 'default';
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  final List<Map<String, String>> _availableSounds = [
-    {'name': 'النغمة الافتراضية', 'id': 'default', 'icon': '🎵'},
-    {'name': 'تنبيه هادئ', 'id': 'soft_bell', 'icon': '🔔'},
-    {'name': 'تنبيه قوي', 'id': 'loud_alarm', 'icon': '📢'},
+  List<Map<String, String>> _getAvailableSounds(AppLocalizations l10n) => [
+    {'name': l10n.defaultSound, 'id': 'default', 'icon': '🎵'},
+    {'name': l10n.softBell, 'id': 'soft_bell', 'icon': '🔔'},
+    {'name': l10n.loudAlarm, 'id': 'loud_alarm', 'icon': '📢'},
   ];
 
   @override
@@ -57,10 +59,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   void _nextPage() {
+    final l10n = AppLocalizations.of(context)!;
     if (_currentStep == 0) {
       if (_nameController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('يرجى إدخال اسم الدواء')),
+          SnackBar(content: Text(l10n.enterMedName)),
         );
         return;
       }
@@ -167,6 +170,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
   void _saveForm() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameController.text;
     final doseAmount = double.tryParse(_doseAmountController.text) ?? 1.0;
     final containerCount = int.tryParse(_containerCountController.text) ?? 1;
@@ -180,8 +184,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _startTime.minute,
     );
 
-    String finalDosage = '$doseAmount ${_medType == 'pill' ? 'حبة' : (_medType == 'liquid' ? 'مل' : 'جرعة')}';
-    String freqLabel = _frequencyType == 'daily' ? 'Daily' : 'Every $_intervalValue $_intervalUnit';
+    String finalDosage = '$doseAmount ${_medType == 'pill' ? l10n.pillUnit : (_medType == 'liquid' ? l10n.ml : l10n.unit)}';
+    String freqLabel = _frequencyType == 'daily' ? l10n.dailyEveryDay : '${l10n.every} $_intervalValue ${_intervalUnit == 'hours' ? l10n.hours : (_intervalUnit == 'minutes' ? l10n.minute : l10n.day)}';
 
     int totalUnits = containerCount * unitsPerContainer;
     String? calculatedEndDateStr;
@@ -202,10 +206,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       calculatedEndDateStr = DateFormat('yyyy-MM-dd').format(_endDate);
     }
 
+    final locale = Localizations.localeOf(context).toString();
     final newMed = Medication(
       name: name,
       dosage: finalDosage,
-      timeText: "${DateFormat.yMd().format(startDT)} ${DateFormat.jm().format(startDT)}",
+      timeText: "${DateFormat.yMd(locale).format(startDT)} ${DateFormat.jm(locale).format(startDT)}",
       frequency: freqLabel,
       interval: _frequencyType == 'interval' ? _intervalValue : null,
       intervalUnit: _frequencyType == 'interval' ? _intervalUnit : 'daily',
@@ -269,6 +274,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildHeader() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -293,12 +299,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           ),
           Column(
             children: [
-              const Text(
-                'إضافة دواء جديد',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              Text(
+                l10n.addMedication,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               Text(
-                'تتبع صحتك بدقة',
+                l10n.trackHealth,
                 style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
               ),
             ],
@@ -375,6 +381,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildBottomNavigation() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
@@ -400,7 +407,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               flex: 1,
               child: TextButton(
                 onPressed: _previousPage,
-                child: Text('السابق', style: TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold)),
+                child: Text(l10n.previous, style: TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold)),
               ),
             ),
           const SizedBox(width: 12),
@@ -417,7 +424,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
               onPressed: _nextPage,
               child: Text(
-                _currentStep < 2 ? 'المتابعة' : 'حفظ الدواء',
+                _currentStep < 2 ? l10n.continueText : l10n.saveMedication,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -429,6 +436,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildStep1Page() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
@@ -442,7 +450,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'المرحلة الأولى',
+              l10n.step1,
               style: TextStyle(
                 color: theme.primaryColor,
                 fontWeight: FontWeight.bold,
@@ -451,9 +459,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'معلومات الدواء الأساسية',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          Text(
+            l10n.medicationBasicInfo,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
           ),
           const SizedBox(height: 30),
           
@@ -461,8 +469,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             controller: _nameController,
             style: const TextStyle(fontSize: 18),
             decoration: InputDecoration(
-              labelText: 'اسم الدواء',
-              hintText: 'مثلاً: أوغمنتين 1جم',
+              labelText: l10n.medicationName,
+              hintText: l10n.medicationNameHint,
               prefixIcon: Icon(Icons.medication, color: theme.primaryColor),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -482,7 +490,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           ),
           const SizedBox(height: 30),
           
-          const Text('ما هو شكل الدواء؟', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.medicationForm, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -490,17 +498,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _buildTypeCard('pill', 'حبوب', Icons.adjust, constraints.maxWidth),
-                  _buildTypeCard('liquid', 'سائل', Icons.water_drop, constraints.maxWidth),
-                  _buildTypeCard('injection', 'حقنة', Icons.vaccines, constraints.maxWidth),
-                  _buildTypeCard('other', 'آخر', Icons.more_horiz, constraints.maxWidth),
+                  _buildTypeCard('pill', l10n.pill, Icons.adjust, constraints.maxWidth),
+                  _buildTypeCard('liquid', l10n.liquid, Icons.water_drop, constraints.maxWidth),
+                  _buildTypeCard('injection', l10n.injection, Icons.vaccines, constraints.maxWidth),
+                  _buildTypeCard('other', l10n.other, Icons.more_horiz, constraints.maxWidth),
                 ],
               );
             },
           ),
           
           const SizedBox(height: 40),
-          const Text('الجرعة والمخزون المتاح', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.dosageAndStock, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           // Dosage Section
           Container(
@@ -520,7 +528,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'كمية الجرعة الواحدة', 
+                      l10n.doseAmount, 
                       style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                     ),
                     Container(
@@ -530,7 +538,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _medType == 'pill' ? 'حبة' : (_medType == 'liquid' ? 'مل' : 'جرعة'),
+                        _medType == 'pill' ? l10n.pillUnit : (_medType == 'liquid' ? l10n.ml : l10n.unit),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: theme.primaryColor,
@@ -579,15 +587,15 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'نوع الحاوية',
+                  l10n.containerType,
                   style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildToggleOption('box', 'علبة', Colors.orange),
+                    _buildToggleOption('box', l10n.box, Colors.orange),
                     const SizedBox(width: 8),
-                    _buildToggleOption('bottle', 'قارورة', Colors.orange),
+                    _buildToggleOption('bottle', l10n.bottle, Colors.orange),
                   ],
                 ),
               ],
@@ -607,7 +615,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
             child: _buildNumericControl(
               _containerCountController, 
-              _containerType == 'box' ? 'إجمالي العلب' : 'إجمالي القوارير', 
+              _containerType == 'box' ? l10n.totalBoxes : l10n.totalBottles, 
               Colors.orange,
               isInt: true,
             ),
@@ -626,7 +634,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
             child: _buildNumericControl(
               _unitsPerContainerController, 
-              _containerType == 'box' ? 'عدد الحبوب في كل علبة' : 'إجمالي السائل في القارورة', 
+              _containerType == 'box' ? l10n.unitsPerBox : l10n.unitsPerBottle, 
               Colors.blue,
               isInt: true,
               step: 1.0,
@@ -727,6 +735,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildStep2Page() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
@@ -739,9 +748,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: Colors.purple.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'المرحلة الثانية',
-              style: TextStyle(
+            child: Text(
+              l10n.step2,
+              style: const TextStyle(
                 color: Colors.purple,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
@@ -749,13 +758,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'تحديد الموعد والتكرار',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          Text(
+            l10n.medicationSchedule,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
           ),
           const SizedBox(height: 30),
           
-          _buildInfoTile('تاريخ بدء الدواء', DateFormat.yMMMMd().format(_startDate), Icons.calendar_today, Colors.blue, () async {
+          _buildInfoTile(l10n.doseDate, DateFormat.yMMMMd(l10n.localeName).format(_startDate), Icons.calendar_today, Colors.blue, () async {
             final picked = await showDatePicker(
               context: context,
               initialDate: _startDate,
@@ -765,20 +774,20 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             if (picked != null) setState(() => _startDate = picked);
           }),
           const SizedBox(height: 16),
-          _buildInfoTile('وقت أول جرعة في اليوم', _startTime.format(context), Icons.access_time, Colors.orange, () async {
+          _buildInfoTile(l10n.firstDoseTime, _startTime.format(context), Icons.access_time, Colors.orange, () async {
             final picked = await showTimePicker(context: context, initialTime: _startTime);
             if (picked != null) setState(() => _startTime = picked);
           }),
           
           const SizedBox(height: 40),
-          const Text('نظام تكرار الجرعات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(l10n.dosingSchedule, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           
           Row(
             children: [
-              Expanded(child: _buildFrequencyChip('يومي (كل يوم)', 'daily', Icons.today)),
+              Expanded(child: _buildFrequencyChip(l10n.dailyEveryDay, 'daily', Icons.today)),
               const SizedBox(width: 12),
-              Expanded(child: _buildFrequencyChip('كل وقت معين', 'interval', Icons.update)),
+              Expanded(child: _buildFrequencyChip(l10n.everyInterval, 'interval', Icons.update)),
             ],
           ),
           
@@ -814,7 +823,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   Expanded(
                     child: Row(
                       children: [
-                        const Text('كل ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        Text(l10n.every, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 4),
                         _buildStepButton(Icons.remove, () {
                           if (_intervalValue > 1) setState(() => _intervalValue--);
@@ -832,10 +841,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                             isExpanded: true,
                             underline: const SizedBox(),
                             icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                            items: const [
-                              DropdownMenuItem(value: 'minutes', child: Text('دقيقة', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'hours', child: Text('ساعة', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'days', child: Text('يوم', style: TextStyle(fontSize: 12))),
+                            items: [
+                              DropdownMenuItem(value: 'minutes', child: Text(l10n.minute, style: const TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'hours', child: Text(l10n.hour, style: const TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'days', child: Text(l10n.day, style: const TextStyle(fontSize: 12))),
                             ],
                             onChanged: (v) => setState(() => _intervalUnit = v!),
                           ),
@@ -870,15 +879,15 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               children: [
                 SwitchListTile(
                   activeColor: Colors.red,
-                  title: const Text('تحديد تاريخ انتهاء يدوياً', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('سيتم إيقاف التنبيهات تلقائياً في هذا التاريخ'),
+                  title: Text(l10n.setEndDate, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(l10n.endDateDesc),
                   value: _hasEndDate,
                   onChanged: (v) => setState(() => _hasEndDate = v),
                 ),
                 if (_hasEndDate)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: _buildInfoTile('تاريخ التوقف', DateFormat.yMMMMd().format(_endDate), Icons.event_busy, Colors.red, () async {
+                    child: _buildInfoTile(l10n.stopDate, DateFormat.yMMMMd(l10n.localeName).format(_endDate), Icons.event_busy, Colors.red, () async {
                       final picked = await showDatePicker(
                         context: context,
                         initialDate: _endDate.isBefore(_startDate) ? _startDate : _endDate,
@@ -927,11 +936,14 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           children: [
             Icon(icon, color: isSelected ? Colors.white : theme.hintColor, size: 18),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            Flexible(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
           ],
@@ -942,6 +954,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildStep3Page() {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
@@ -954,9 +967,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: Colors.teal.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'المرحلة الأخيرة',
-              style: TextStyle(
+            child: Text(
+              l10n.lastStep,
+              style: const TextStyle(
                 color: Colors.teal,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
@@ -964,13 +977,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'تخصيص صوت التنبيه',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          Text(
+            l10n.customizeSound,
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -0.5),
           ),
           const SizedBox(height: 30),
           
-          ..._availableSounds.map((sound) {
+          ..._getAvailableSounds(l10n).map((sound) {
             final soundId = sound['id'] ?? 'default';
             final soundName = sound['name'] ?? '';
             final soundIcon = sound['icon'] ?? '🎵';
@@ -1015,7 +1028,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     fontSize: 18,
                   ),
                 ),
-                subtitle: Text(isSelected ? 'تم اختيار النغمة' : 'اضغط للمعاينة'),
+                subtitle: Text(isSelected ? l10n.soundSelected : l10n.tapToPreview),
                 trailing: isSelected 
                   ? Icon(Icons.check_circle, color: theme.primaryColor) 
                   : Icon(Icons.play_circle_outline, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
@@ -1052,13 +1065,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               children: [
                 Icon(Icons.notifications_active, size: 80, color: theme.primaryColor.withValues(alpha: 0.3)),
                 const SizedBox(height: 20),
-                const Text(
-                  'جاهز تماماً!',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.readyStep,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'سيقوم التطبيق بتنبيهك في الأوقات المحددة بدقة. تذكر دائماً أن الالتزام بموعد الدواء هو طريقك للشفاء.',
+                  l10n.readyStepDesc,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), height: 1.5),
                 ),
@@ -1131,4 +1144,5 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
   }
 }
+
 

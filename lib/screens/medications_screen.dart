@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../providers/medication_provider.dart';
 import 'medication_detail_screen.dart';
 
@@ -8,15 +9,16 @@ class MedicationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('قائمة الأدوية'),
+        title: Text(l10n.medications),
         centerTitle: true,
       ),
       body: Consumer<MedicationProvider>(
         builder: (context, provider, child) {
           if (provider.medications.isEmpty) {
-            return const Center(child: Text('لا توجد أدوية مضافة حالياً'));
+            return Center(child: Text(l10n.noMedications));
           }
 
           return ListView.builder(
@@ -128,7 +130,7 @@ class MedicationsScreen extends StatelessWidget {
             ),
             ListTile(
               leading: Icon(Icons.info_outline, color: theme.colorScheme.primary),
-              title: const Text('عرض التفاصيل'),
+              title: Text(AppLocalizations.of(context)!.viewDetails),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -140,9 +142,9 @@ class MedicationsScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.inventory_2_outlined, color: Colors.orange),
-              title: const Text('تحديث المخزون'),
-              subtitle: Text('الكمية الحالية: ${med.totalPills ?? 0} حبة'),
+              leading: const Icon(Icons.inventory_2_outlined, color: Colors.orange),
+              title: Text(AppLocalizations.of(context)!.updateStock),
+              subtitle: Text(med.localeStockText(Localizations.localeOf(context).languageCode)),
               onTap: () {
                 Navigator.pop(context);
                 _showUpdateStockDialog(context, med, provider);
@@ -150,7 +152,7 @@ class MedicationsScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('حذف الدواء', style: TextStyle(color: Colors.red)),
+              title: Text(AppLocalizations.of(context)!.deleteMedication, style: const TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
                 _showDeleteDialog(context, med, provider);
@@ -186,6 +188,9 @@ class MedicationsScreen extends StatelessWidget {
           int currentStock = med.totalPills ?? 0;
           int finalStock = currentStock + totalToAdd;
 
+          final l10n = AppLocalizations.of(context)!;
+          final unit = med.dosage.split(' ').length > 1 ? med.dosage.split(' ').last : l10n.unit;
+
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
             backgroundColor: theme.colorScheme.surface,
@@ -201,7 +206,7 @@ class MedicationsScreen extends StatelessWidget {
                   child: Icon(Icons.inventory_2_outlined, color: theme.colorScheme.primary, size: 24),
                 ),
                 const SizedBox(width: 16),
-                const Text('تحديث المخزون', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(l10n.updateStock, style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             content: SingleChildScrollView(
@@ -212,7 +217,7 @@ class MedicationsScreen extends StatelessWidget {
                   _buildElegantControl(
                     theme, 
                     containerController, 
-                    'كم علبة اشتريت؟', 
+                    l10n.howManyBoxes, 
                     Icons.inventory_2_outlined, 
                     () => updateVal(containerController, -1),
                     () => updateVal(containerController, 1)
@@ -221,7 +226,7 @@ class MedicationsScreen extends StatelessWidget {
                   _buildElegantControl(
                     theme, 
                     unitsController, 
-                    'عدد الحبوب في العلبة', 
+                    l10n.howManyUnitsPerBox, 
                     Icons.local_pharmacy, 
                     () => updateVal(unitsController, -1),
                     () => updateVal(unitsController, 1)
@@ -239,16 +244,16 @@ class MedicationsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('المخزون الحالي:', style: TextStyle(fontSize: 13)),
-                            Text('$currentStock حبة', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(l10n.currentStockLabel, style: const TextStyle(fontSize: 13)),
+                            Text('$currentStock $unit', style: const TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('الكمية المضافة:', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w500)),
-                            Text('+$totalToAdd حبة', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                            Text(l10n.addedAmountLabel, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w500)),
+                            Text('+$totalToAdd $unit', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
                           ],
                         ),
                         const Padding(
@@ -258,8 +263,8 @@ class MedicationsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('المخزون الجديد:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('$finalStock حبة', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 20)),
+                            Text(l10n.newStockLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('$finalStock $unit', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 20)),
                           ],
                         ),
                       ],
@@ -271,7 +276,7 @@ class MedicationsScreen extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('إلغاء', style: TextStyle(color: theme.colorScheme.secondary)),
+                child: Text(l10n.cancel, style: TextStyle(color: theme.colorScheme.secondary)),
               ),
               FilledButton(
                 onPressed: () {
@@ -281,11 +286,11 @@ class MedicationsScreen extends StatelessWidget {
                     SnackBar(
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      content: Text('✅ تم تحديث المخزون بنجاح: $finalStock حبة'),
+                      content: Text(l10n.stockUpdateSuccess(finalStock, unit)),
                     ),
                   );
                 },
-                child: const Text('حفظ التحديث'),
+                child: Text(l10n.saveUpdate),
               ),
             ],
           );
@@ -358,25 +363,27 @@ class MedicationsScreen extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context, med, MedicationProvider provider) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف الدواء'),
-        content: const Text('هل أنت متأكد من حذف هذا التذكير؟'),
+        title: Text(l10n.deleteMedication),
+        content: Text(l10n.localeDeleteQuery(med.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               provider.deleteMedication(med.id!);
               Navigator.pop(context);
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.deleteMedication, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
   }
 }
+

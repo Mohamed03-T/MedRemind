@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import 'home_screen.dart';
 import 'calendar_screen.dart';
 import 'medications_screen.dart';
@@ -24,21 +25,19 @@ class _RootScreenState extends State<RootScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      // Ensure RTL for Arabic layout
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: _pages[_currentIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'التقويم'),
-            BottomNavigationBarItem(icon: Icon(Icons.medication), label: 'الأدوية'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'الإعدادات'),
-          ],
-        ),
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: l10n.home),
+          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: l10n.calendar),
+          BottomNavigationBarItem(icon: const Icon(Icons.medication), label: l10n.medications),
+          BottomNavigationBarItem(icon: const Icon(Icons.settings), label: l10n.settings),
+        ],
+      ),
         floatingActionButton: _currentIndex == 2
             ? FloatingActionButton(
                 onPressed: () {
@@ -50,7 +49,7 @@ class _RootScreenState extends State<RootScreen> {
                 child: const Icon(Icons.add),
               )
             : null,
-      ),
     );
   }
 }
+

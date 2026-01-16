@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -24,6 +25,66 @@ class NotificationService {
   final DatabaseService _db = DatabaseService();
   VoidCallback? onDataChanged;
   static const MethodChannel _batteryChannel = MethodChannel('com.mohamed.medremind/battery');
+
+  Future<String> _getLang() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('languageCode') ?? 'ar';
+  }
+
+  String _t(String key, String lang, {Map<String, String>? args}) {
+    final Map<String, Map<String, String>> translations = {
+      'ar': {
+        'snooze_title': '⏰ غفوة: موعد دواء',
+        'snooze_body': 'تذكير بعد 10 دقائق لتناول الدواء',
+        'low_stock_title': '⚠️ كمية الدواء منخفضة',
+        'low_stock_body': 'بقي لديك {remaining} من {name}. يرجى إعادة شراء الدواء قريباً.',
+        'med_time_title': '💊 موعد الدواء: {name}',
+        'med_time_body': 'حان وقت تناول جرعة {dosage}',
+        'action_taken': 'تم التناول ✅',
+        'action_snooze': 'غفوة ⏰',
+        'channel_name': 'تذكير بمواعيد الدواء',
+        'channel_desc': 'إشعارات تذكير الدواء المجدولة',
+        'test_title': 'إشعار فوري',
+        'test_body': 'النظام يعمل بنجاح! هل تسمع التنبيه؟',
+        'snooze_channel': 'تنبيهات الغفوة',
+        'stock_channel': 'تحذير نفاذ الكمية',
+        'default': 'الافتراضي',
+        'soft_bell': 'تنبيه هادئ',
+        'loud_alarm': 'تنبيه قوي',
+        'chan_prefix': 'تذكير الدواء',
+        'chan_desc_prefix': 'إشعارات تذكير الدواء بنغمة',
+      },
+      'en': {
+        'snooze_title': '⏰ Snooze: Medication Time',
+        'snooze_body': 'Reminder after 10 minutes to take medication',
+        'low_stock_title': '⚠️ Low Medication Stock',
+        'low_stock_body': 'You have only {remaining} of {name} left. Please restock soon.',
+        'med_time_title': '💊 Medication Time: {name}',
+        'med_time_body': 'Time to take your dose of {dosage}',
+        'action_taken': 'Taken ✅',
+        'action_snooze': 'Snooze ⏰',
+        'channel_name': 'Medication Reminders',
+        'channel_desc': 'Scheduled medication reminders',
+        'test_title': 'Instant Notification',
+        'test_body': 'System is working successfully! Do you hear the alert?',
+        'snooze_channel': 'Snooze Alerts',
+        'stock_channel': 'Stock Warning',
+        'default': 'Default',
+        'soft_bell': 'Soft Bell',
+        'loud_alarm': 'Loud Alarm',
+        'chan_prefix': 'Med Reminder',
+        'chan_desc_prefix': 'Medication reminders with sound',
+      }
+    };
+    
+    String text = translations[lang]?[key] ?? translations['ar']![key]!;
+    if (args != null) {
+      args.forEach((k, v) {
+        text = text.replaceAll('{$k}', v);
+      });
+    }
+    return text;
+  }
 
   Future<void> init() async {
     try {
@@ -73,17 +134,18 @@ class NotificationService {
     
     debugPrint('Android Plugin: ${androidPlugin != null}');
 
+    final lang = await _getLang();
     final List<Map<String, String>> channels = [
-      {'id': 'med_reminder_default_v2', 'name': 'الافتراضي', 'sound': 'default'},
-      {'id': 'med_reminder_soft_bell_v2', 'name': 'تنبيه هادئ', 'sound': 'soft_bell'},
-      {'id': 'med_reminder_loud_alarm_v2', 'name': 'تنبيه قوي', 'sound': 'loud_alarm'},
+      {'id': 'med_reminder_default_v2', 'name': _t('default', lang), 'sound': 'default'},
+      {'id': 'med_reminder_soft_bell_v2', 'name': _t('soft_bell', lang), 'sound': 'soft_bell'},
+      {'id': 'med_reminder_loud_alarm_v2', 'name': _t('loud_alarm', lang), 'sound': 'loud_alarm'},
     ];
 
     for (var chan in channels) {
       await androidPlugin?.createNotificationChannel(AndroidNotificationChannel(
         chan['id']!,
-        'تذكير الدواء (${chan['name']})',
-        description: 'إشعارات تذكير الدواء بنغمة ${chan['name']}',
+        '${_t('chan_prefix', lang)} (${chan['name']})',
+        description: '${_t('chan_desc_prefix', lang)} ${chan['name']}',
         importance: Importance.max,
         playSound: true,
         sound: chan['sound'] == 'default' 
@@ -140,16 +202,17 @@ class NotificationService {
       // Reschedule in 10 minutes
       final now = tz.TZDateTime.now(tz.local);
       final snoozeTime = now.add(const Duration(minutes: 10));
+      final lang = await _getLang();
       
       await flutterLocalNotificationsPlugin.zonedSchedule(
         medId + 999999, // Unique ID for snooze
-        '⏰ غفوة: موعد دواء',
-        'تذكير بعد 10 دقائق لتناول الدواء',
+        _t('snooze_title', lang),
+        _t('snooze_body', lang),
         snoozeTime,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'med_reminder_default_v2',
-            'تنبيهات الغفوة',
+            _t('snooze_channel', lang),
             importance: Importance.max,
             priority: Priority.max,
             audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -209,19 +272,20 @@ class NotificationService {
   Future<void> showLowStockNotification(int medId, int remaining) async {
     final med = await _db.getMedicationById(medId);
     if (med == null) return;
+    final lang = await _getLang();
 
     await flutterLocalNotificationsPlugin.show(
       medId + 888888, // Unique ID for low stock
-      '⚠️ كمية الدواء منخفضة',
-      'بقي لديك $remaining حبات فقط من ${med.name}. يرجى إعادة شراء الدواء قريباً.',
-      const NotificationDetails(
+      _t('low_stock_title', lang),
+      _t('low_stock_body', lang, args: {'remaining': remaining.toString(), 'name': med.name}),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'med_reminder_default_v2',
-          'تحذير نفاذ الكمية',
+          _t('stock_channel', lang),
           importance: Importance.high,
           priority: Priority.high,
           audioAttributesUsage: AudioAttributesUsage.notification,
-          styleInformation: BigTextStyleInformation(''),
+          styleInformation: const BigTextStyleInformation(''),
         ),
       ),
     );
@@ -231,6 +295,7 @@ class NotificationService {
     if (medication.id == null) return;
 
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final lang = await _getLang();
     
     // Create absolute start time (Anchor)
     final tz.TZDateTime anchor = tz.TZDateTime(
@@ -249,8 +314,8 @@ class NotificationService {
 
     final androidDetails = AndroidNotificationDetails(
       channelId,
-      'تذكير بمواعيد الدواء',
-      channelDescription: 'إشعارات تذكير الدواء المجدولة',
+      _t('channel_name', lang),
+      channelDescription: _t('channel_desc', lang),
       importance: Importance.max,
       priority: Priority.max,
       playSound: true,
@@ -262,8 +327,8 @@ class NotificationService {
       audioAttributesUsage: AudioAttributesUsage.alarm,
       category: AndroidNotificationCategory.alarm,
       actions: <AndroidNotificationAction>[
-        const AndroidNotificationAction('action_taken', 'تم التناول ✅', showsUserInterface: true),
-        const AndroidNotificationAction('action_snooze', 'غفوة ⏰', showsUserInterface: true),
+        AndroidNotificationAction('action_taken', _t('action_taken', lang), showsUserInterface: true),
+        AndroidNotificationAction('action_snooze', _t('action_snooze', lang), showsUserInterface: true),
       ],
     );
 
@@ -291,8 +356,8 @@ class NotificationService {
 
         await flutterLocalNotificationsPlugin.zonedSchedule(
           medication.id!,
-          '💊 موعد الدواء: ${medication.name}',
-          'حان وقت تناول جرعة ${medication.dosage}',
+          _t('med_time_title', lang, args: {'name': medication.name}),
+          _t('med_time_body', lang, args: {'dosage': medication.dosage}),
           scheduleTime,
           NotificationDetails(
             android: androidDetails,
@@ -328,8 +393,8 @@ class NotificationService {
         try {
           await flutterLocalNotificationsPlugin.zonedSchedule(
             notifId,
-            '💊 موعد الدواء: ${medication.name}',
-            'حان وقت تناول جرعة ${medication.dosage}',
+            _t('med_time_title', lang, args: {'name': medication.name}),
+            _t('med_time_body', lang, args: {'dosage': medication.dosage}),
             current,
             NotificationDetails(
               android: androidDetails,

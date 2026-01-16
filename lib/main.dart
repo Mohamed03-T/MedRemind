@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import 'providers/medication_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/calendar_provider.dart';
@@ -20,8 +22,9 @@ void main() async {
     debugPrint('Initial SharedPreferences load failed (normal during hot restart): $e');
   }
 
-  // Initialize locale data for date formatting (Arabic)
+  // Initialize locale data for date formatting
   await initializeDateFormatting('ar');
+  await initializeDateFormatting('en');
 
   // Initialize notification service
   await NotificationService().init();
@@ -49,7 +52,7 @@ class MyApp extends StatelessWidget {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
         return MaterialApp(
-          title: 'تذكير الدواء',
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
           debugShowCheckedModeBanner: false,
           themeMode: settingsProvider.themeMode,
           theme: ThemeData(
@@ -145,7 +148,17 @@ class MyApp extends StatelessWidget {
               elevation: 4,
             ),
           ),
-          locale: const Locale('ar', ''),
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('ar', ''),
+            Locale('en', ''),
+          ],
+          locale: settingsProvider.locale,
           home: const RootScreen(),
         );
       },
@@ -238,3 +251,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+

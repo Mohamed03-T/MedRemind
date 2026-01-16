@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 import '../providers/medication_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -36,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  String _getCountdownText(DateTime scheduledTime) {
+  String _getCountdownText(DateTime scheduledTime, String langCode) {
     final now = DateTime.now();
     final difference = scheduledTime.difference(now);
     final absDiff = difference.abs();
@@ -61,9 +62,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تذكير الدواء'),
+        title: Text(l10n.appTitle),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -122,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       _buildStatCard(
                         context,
-                        'الإجمالي',
+                        l10n.total,
                         todayOccurrences.length.toString(),
                         Icons.medication,
                         Colors.blue,
@@ -130,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 12),
                       _buildStatCard(
                         context,
-                        'أخذت',
+                        l10n.taken,
                         completedList.length.toString(),
                         Icons.check_circle,
                         Colors.green,
@@ -138,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 12),
                       _buildStatCard(
                         context,
-                        'متبقية',
+                        l10n.remaining,
                         pendingList.length.toString(),
                         Icons.pending_actions,
                         Colors.orange,
@@ -181,11 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'الجرعة القادمة: ${nextDose.medication.name}',
+                                    l10n.nextDose(nextDose.medication.name),
                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                   ),
                                   Text(
-                                    'في تمام الساعة ${DateFormat.Hm().format(nextDose.scheduledTime)}',
+                                    l10n.atTime(DateFormat.Hm(locale).format(nextDose.scheduledTime)),
                                     style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13),
                                   ),
                                 ],
@@ -202,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            _getCountdownText(nextDose.scheduledTime),
+                            _getCountdownText(nextDose.scheduledTime, l10n.localeName),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
@@ -225,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 24, bottom: 8),
                       child: Text(
-                        'الجرعات المتبقية لليوم',
+                        l10n.remainingDosesToday,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.onSurface,
@@ -253,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 32, bottom: 8),
                       child: Text(
-                        'الجرعات التي تم أخذها',
+                        l10n.takenDosesToday,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.green,
@@ -283,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(Icons.medication_outlined, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
                         const SizedBox(height: 16),
                         Text(
-                          'لا توجد جرعات مجدولة لليوم',
+                          l10n.noDosesToday,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                           ),
@@ -345,6 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDoseItem(BuildContext context, DoseOccurrence occ, bool isDone) {
     final theme = Theme.of(context);
     final med = occ.medication;
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -388,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      DateFormat('a', 'ar').format(occ.scheduledTime),
+                      DateFormat('a', Localizations.localeOf(context).toString()).format(occ.scheduledTime),
                       style: TextStyle(
                         fontSize: 10,
                         color: isDone ? Colors.green : theme.colorScheme.primary,
@@ -436,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icon(Icons.timer_outlined, size: 14, color: _getCountdownColor(occ.scheduledTime).withValues(alpha: 0.5)),
                           const SizedBox(width: 4),
                           Text(
-                            _getCountdownText(occ.scheduledTime),
+                            _getCountdownText(occ.scheduledTime, l10n.localeName),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -461,3 +465,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

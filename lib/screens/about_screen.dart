@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medremind/l10n/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -6,10 +7,11 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('عن التطبيق'),
+        title: Text(l10n.aboutApp),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -48,17 +50,16 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12.0, 22.0, 12.0, 2.0),
+              child: ClipOval(
                 child: Image.asset(
                   'assets/photos/LOGO.png',
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              'تذكير الدواء',
+              l10n.appTitle,
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,
@@ -66,7 +67,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'رفيقك الصحي لتنظيم جرعاتك اليومية',
+              l10n.appSlogan,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -76,26 +77,26 @@ class AboutScreen extends StatelessWidget {
             _buildFeatureItem(
               context,
               Icons.notifications_active,
-              'تنبيهات ذكية',
-              'لا تنسى جرعتك أبداً مع نظام التنبيهات المتقدم والعد التنازلي الدقيق.',
+              l10n.feature1Title,
+              l10n.feature1Desc,
             ),
             _buildFeatureItem(
               context,
               Icons.calendar_month,
-              'سجل المتابعة',
-              'تتبع مدى التزامك من خلال تقويم تفصيلي يعرض الجرعات التي تم أخذها.',
+              l10n.feature2Title,
+              l10n.feature2Desc,
             ),
             _buildFeatureItem(
               context,
               Icons.security,
-              'خصوصية تامة',
-              'بياناتك الصحية مخزنة محلياً على جهازك لضمان أعلى مستويات الأمان والخصوصية.',
+              l10n.feature3Title,
+              l10n.feature3Desc,
             ),
             const SizedBox(height: 40),
             const Divider(),
             const SizedBox(height: 20),
             Text(
-              'تم التطوير بكل حب لمساعدتكم في الحفاظ على صحتكم.',
+              l10n.developedWithLove,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontStyle: FontStyle.italic,
@@ -103,9 +104,9 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'إصدار 1.0.0',
-              style: TextStyle(fontWeight: FontWeight.w500),
+            Text(
+              l10n.version,
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -153,3 +154,4 @@ class AboutScreen extends StatelessWidget {
     );
   }
 }
+

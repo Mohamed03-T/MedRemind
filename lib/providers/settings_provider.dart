@@ -7,11 +7,13 @@ class SettingsProvider with ChangeNotifier {
   bool _notificationsEnabled = true;
   bool _soundEnabled = true;
   String _userName = '';
+  Locale _locale = const Locale('ar');
 
   bool get isDarkMode => _isDarkMode;
   bool get notificationsEnabled => _notificationsEnabled;
   bool get soundEnabled => _soundEnabled;
   String get userName => _userName;
+  Locale get locale => _locale;
 
   SettingsProvider(this._prefs) {
     if (_prefs != null) {
@@ -44,6 +46,8 @@ class SettingsProvider with ChangeNotifier {
     _notificationsEnabled = _prefs!.getBool('notificationsEnabled') ?? true;
     _soundEnabled = _prefs!.getBool('soundEnabled') ?? true;
     _userName = _prefs!.getString('userName') ?? '';
+    final langCode = _prefs!.getString('languageCode') ?? 'ar';
+    _locale = Locale(langCode);
   }
 
   Future<void> toggleTheme() async {
@@ -68,6 +72,13 @@ class SettingsProvider with ChangeNotifier {
     _userName = name;
     notifyListeners();
     await _saveToPrefs('userName', name);
+  }
+
+  Future<void> setLocale(Locale newLocale) async {
+    if (_locale == newLocale) return;
+    _locale = newLocale;
+    notifyListeners();
+    await _saveToPrefs('languageCode', newLocale.languageCode);
   }
 
   Future<void> _saveToPrefs(String key, dynamic value) async {

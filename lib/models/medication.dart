@@ -176,6 +176,14 @@ class Medication {
 
     return [];
   }
+
+  String localeStockText(String langCode) {
+    if (langCode == 'ar') {
+      return 'الكمية الحالية: ${totalPills ?? 0} حبة';
+    } else {
+      return 'Current Stock: ${totalPills ?? 0} pills';
+    }
+  }
 }
 
 class DoseOccurrence {
