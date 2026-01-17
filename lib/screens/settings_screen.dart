@@ -21,13 +21,18 @@ class SettingsScreen extends StatelessWidget {
               Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
                   final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
                   return ListTile(
-                    leading: Icon(Icons.palette_outlined, color: theme.colorScheme.primary),
+                    leading: Icon(
+                      isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                      color: isDark ? Colors.white : Colors.orange,
+                    ),
                     title: Text(l10n.darkMode),
-                    trailing: Switch(
-                      value: settings.isDarkMode,
-                      activeColor: theme.colorScheme.primary,
-                      onChanged: (v) => settings.toggleTheme(),
+                    trailing: _buildModernSystemSwitch(
+                      context,
+                      settings.isDarkMode,
+                      (v) => settings.toggleTheme(),
+                      isDark,
                     ),
                   );
                 },
@@ -35,21 +40,28 @@ class SettingsScreen extends StatelessWidget {
               Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
                   final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
+                  final currentLocale = settings.locale.languageCode;
+                  
                   return ListTile(
                     leading: Icon(Icons.language, color: theme.colorScheme.primary),
                     title: Text(l10n.language),
-                    trailing: DropdownButton<String>(
-                      value: settings.locale.languageCode,
-                      underline: const SizedBox(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          settings.setLocale(Locale(newValue));
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(value: 'ar', child: Text('العربية')),
-                        DropdownMenuItem(value: 'en', child: Text('English')),
-                      ],
+                    trailing: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black : theme.colorScheme.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark ? Colors.white.withValues(alpha: 0.2) : theme.colorScheme.primary.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLangToggleItem(context, 'ar', 'العربية', currentLocale == 'ar', isDark),
+                          _buildLangToggleItem(context, 'en', 'EN', currentLocale == 'en', isDark),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -60,13 +72,20 @@ class SettingsScreen extends StatelessWidget {
               Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
                   final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
                   return ListTile(
-                    leading: Icon(Icons.notifications_active_outlined, color: theme.colorScheme.primary),
+                    leading: Icon(
+                      settings.notificationsEnabled 
+                        ? Icons.notifications_active_rounded 
+                        : Icons.notifications_none_rounded, 
+                      color: settings.notificationsEnabled ? theme.colorScheme.primary : theme.hintColor
+                    ),
                     title: Text(l10n.enableNotifications),
-                    trailing: Switch(
-                      value: settings.notificationsEnabled,
-                      activeColor: theme.colorScheme.primary,
-                      onChanged: (v) => settings.setNotificationsEnabled(v),
+                    trailing: _buildModernSystemSwitch(
+                      context,
+                      settings.notificationsEnabled,
+                      (v) => settings.setNotificationsEnabled(v),
+                      isDark,
                     ),
                   );
                 },
@@ -74,13 +93,18 @@ class SettingsScreen extends StatelessWidget {
               Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
                   final theme = Theme.of(context);
+                  final isDark = theme.brightness == Brightness.dark;
                   return ListTile(
-                    leading: Icon(Icons.volume_up_outlined, color: theme.colorScheme.primary),
+                    leading: Icon(
+                      settings.soundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded, 
+                      color: settings.soundEnabled ? theme.colorScheme.primary : theme.hintColor
+                    ),
                     title: Text(l10n.soundEffects),
-                    trailing: Switch(
-                      value: settings.soundEnabled,
-                      activeColor: theme.colorScheme.primary,
-                      onChanged: (v) => settings.setSoundEnabled(v),
+                    trailing: _buildModernSystemSwitch(
+                      context,
+                      settings.soundEnabled,
+                      (v) => settings.setSoundEnabled(v),
+                      isDark,
                     ),
                   );
                 },
@@ -156,6 +180,93 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernSystemSwitch(BuildContext context, bool value, ValueChanged<bool> onChanged, bool isDark) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: 54,
+        height: 30,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: value 
+              ? (isDark ? Colors.black : theme.colorScheme.primary.withValues(alpha: 0.1)) 
+              : (isDark ? Colors.black : Colors.grey.withValues(alpha: 0.1)),
+          border: Border.all(
+            color: isDark 
+                ? (value ? Colors.white : Colors.white.withValues(alpha: 0.2)) 
+                : (value ? theme.colorScheme.primary : Colors.grey.withValues(alpha: 0.3)),
+            width: 1.5,
+          ),
+          boxShadow: value && isDark ? [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.1),
+              blurRadius: 10,
+            )
+          ] : null,
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: value 
+                  ? (isDark ? Colors.white : theme.colorScheme.primary) 
+                  : (isDark ? Colors.white.withValues(alpha: 0.3) : Colors.grey.withValues(alpha: 0.4)),
+              boxShadow: value && isDark ? [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  blurRadius: 12,
+                )
+              ] : null,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLangToggleItem(BuildContext context, String code, String label, bool isSelected, bool isDark) {
+    final theme = Theme.of(context);
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    
+    return GestureDetector(
+      onTap: () => settings.setLocale(Locale(code)),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? (isDark ? Colors.white : theme.colorScheme.primary) 
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected && isDark ? [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.3),
+              blurRadius: 8,
+            )
+          ] : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected 
+                ? (isDark ? Colors.black : Colors.white) 
+                : (isDark ? Colors.white.withValues(alpha: 0.5) : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 12,
+          ),
         ),
       ),
     );

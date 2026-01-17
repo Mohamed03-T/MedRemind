@@ -31,6 +31,11 @@ class NotificationService {
     return prefs.getString('languageCode') ?? 'ar';
   }
 
+  Future<bool> _getSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('soundEnabled') ?? true;
+  }
+
   String _t(String key, String lang, {Map<String, String>? args}) {
     final Map<String, Map<String, String>> translations = {
       'ar': {
@@ -203,6 +208,7 @@ class NotificationService {
       final now = tz.TZDateTime.now(tz.local);
       final snoozeTime = now.add(const Duration(minutes: 10));
       final lang = await _getLang();
+      final soundEnabled = await _getSoundEnabled();
       
       await flutterLocalNotificationsPlugin.zonedSchedule(
         medId + 999999, // Unique ID for snooze
@@ -215,6 +221,7 @@ class NotificationService {
             _t('snooze_channel', lang),
             importance: Importance.max,
             priority: Priority.max,
+            playSound: soundEnabled,
             audioAttributesUsage: AudioAttributesUsage.alarm,
           ),
         ),
@@ -225,17 +232,18 @@ class NotificationService {
   }
 
   Future<void> showTestNotification() async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    final soundEnabled = await _getSoundEnabled();
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'med_reminder_default_v2',
       'تذكير بمواعيد الدواء',
       importance: Importance.max,
       priority: Priority.max,
-      playSound: true,
+      playSound: soundEnabled,
       showWhen: true,
       audioAttributesUsage: AudioAttributesUsage.alarm,
     );
-    const NotificationDetails platformChannelSpecifics =
+    final NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
       999,
@@ -248,19 +256,20 @@ class NotificationService {
   Future<void> scheduleTestNotification() async {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     final scheduledDate = now.add(const Duration(seconds: 10));
+    final soundEnabled = await _getSoundEnabled();
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       1000,
       '🧪 اختبار المنبه (10 ثواني)',
       'سيعمل المنبه الآن للتأكد من المواعيد المجدولة',
       scheduledDate,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'med_reminder_default_v2',
           'تذكير بمواعيد الدواء',
           importance: Importance.max,
           priority: Priority.max,
-          playSound: true,
+          playSound: soundEnabled,
           audioAttributesUsage: AudioAttributesUsage.alarm,
         ),
       ),
@@ -273,6 +282,7 @@ class NotificationService {
     final med = await _db.getMedicationById(medId);
     if (med == null) return;
     final lang = await _getLang();
+    final soundEnabled = await _getSoundEnabled();
 
     await flutterLocalNotificationsPlugin.show(
       medId + 888888, // Unique ID for low stock
@@ -284,6 +294,7 @@ class NotificationService {
           _t('stock_channel', lang),
           importance: Importance.high,
           priority: Priority.high,
+          playSound: soundEnabled,
           audioAttributesUsage: AudioAttributesUsage.notification,
           styleInformation: const BigTextStyleInformation(''),
         ),
@@ -296,6 +307,7 @@ class NotificationService {
 
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     final lang = await _getLang();
+    final soundEnabled = await _getSoundEnabled();
     
     // Create absolute start time (Anchor)
     final tz.TZDateTime anchor = tz.TZDateTime(
@@ -318,7 +330,7 @@ class NotificationService {
       channelDescription: _t('channel_desc', lang),
       importance: Importance.max,
       priority: Priority.max,
-      playSound: true,
+      playSound: soundEnabled,
       sound: medication.sound != null
           ? RawResourceAndroidNotificationSound(medication.sound!)
           : null,
@@ -362,7 +374,7 @@ class NotificationService {
           NotificationDetails(
             android: androidDetails,
             iOS: DarwinNotificationDetails(
-              presentSound: true,
+              presentSound: soundEnabled,
               sound: medication.sound != null ? '${medication.sound}.mp3' : null,
               categoryIdentifier: 'med_actions',
             ),
@@ -399,7 +411,7 @@ class NotificationService {
             NotificationDetails(
               android: androidDetails,
               iOS: DarwinNotificationDetails(
-                presentSound: true,
+                presentSound: soundEnabled,
                 sound: medication.sound != null ? '${medication.sound}.mp3' : null,
                 categoryIdentifier: 'med_actions',
               ),

@@ -113,7 +113,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           : [theme.colorScheme.surface, theme.colorScheme.surface];
       Color borderColor = theme.brightness == Brightness.light 
           ? Colors.grey.shade200 
-          : Colors.white.withValues(alpha: 0.1);
+          : Colors.white;
       Color textColor = theme.colorScheme.onSurface;
       Color subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
@@ -135,7 +135,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           subTextColor = Colors.white.withValues(alpha: 0.82);
         } else {
           // No tasks done yet
-          borderColor = theme.brightness == Brightness.light ? Colors.grey.shade300 : Colors.white.withValues(alpha: 0.2);
+          borderColor = theme.brightness == Brightness.light ? Colors.grey.shade300 : Colors.white;
         }
       }
 

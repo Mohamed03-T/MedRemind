@@ -23,14 +23,23 @@ class AboutScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.black : theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.transparent,
+                ),
+                boxShadow: theme.brightness == Brightness.dark ? [
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                  )
+                ] : null,
               ),
               child: Text(
                 'MOHAMED TOUTI',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                  color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.primary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -124,10 +133,20 @@ class AboutScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              color: theme.brightness == Brightness.dark ? Colors.black : theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.brightness == Brightness.dark ? Colors.white : Colors.transparent,
+                width: theme.brightness == Brightness.dark ? 1 : 0,
+              ),
+              boxShadow: theme.brightness == Brightness.dark ? [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                )
+              ] : null,
             ),
-            child: Icon(icon, color: theme.colorScheme.primary),
+            child: Icon(icon, color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.primary),
           ),
           const SizedBox(width: 20),
           Expanded(

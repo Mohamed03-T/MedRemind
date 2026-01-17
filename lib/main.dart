@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,46 +60,51 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             brightness: Brightness.light,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2563EB),
-              primary: const Color(0xFF2563EB),
+              seedColor: const Color(0xFF6366F1),
+              primary: const Color(0xFF6366F1),
               onPrimary: Colors.white,
               surface: Colors.white,
-              onSurface: const Color(0xFF0F172A),
-              outline: const Color(0xFFE2E8F0),
+              onSurface: const Color(0xFF334155),
+              outline: const Color(0xFFF1F5F9),
             ),
-            scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+            scaffoldBackgroundColor: const Color(0xFFF8FAFB),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFFF8FAFC),
-              foregroundColor: Color(0xFF0F172A),
+              backgroundColor: Color(0xFFF8FAFB),
+              foregroundColor: Color(0xFF334155),
               elevation: 0,
               centerTitle: true,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              ),
               titleTextStyle: TextStyle(
-                color: Color(0xFF0F172A),
+                color: Color(0xFF334155),
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             cardTheme: CardThemeData(
               color: Colors.white,
-              elevation: 2,
-              shadowColor: const Color(0xFF0F172A).withValues(alpha: 0.05),
+              elevation: 0,
+              shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                side: const BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
               ),
             ),
             bottomNavigationBarTheme: const BottomNavigationBarThemeData(
               backgroundColor: Colors.white,
-              selectedItemColor: Color(0xFF2563EB),
-              unselectedItemColor: Color(0xFF64748B),
+              selectedItemColor: Color(0xFF6366F1),
+              unselectedItemColor: Color(0xFF94A3B8),
               showUnselectedLabels: true,
               type: BottomNavigationBarType.fixed,
-              elevation: 20,
+              elevation: 0,
             ),
             floatingActionButtonTheme: const FloatingActionButtonThemeData(
-              backgroundColor: Color(0xFF2563EB),
+              backgroundColor: Color(0xFF6366F1),
               foregroundColor: Colors.white,
-              elevation: 4,
+              elevation: 2,
             ),
           ),
           darkTheme: ThemeData(
@@ -109,17 +115,23 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               primary: const Color(0xFF3B82F6),
               onPrimary: Colors.white,
-              surface: const Color(0xFF1E293B),
+              surface: Colors.black,
               onSurface: const Color(0xFFF8FAFC),
-              outline: const Color(0xFF334155),
+              outline: Colors.white.withValues(alpha: 0.2),
             ),
-            scaffoldBackgroundColor: const Color(0xFF020617),
-            cardColor: const Color(0xFF1E293B),
+            scaffoldBackgroundColor: Colors.black,
+            cardColor: Colors.black,
+            shadowColor: Colors.white.withValues(alpha: 0.1),
             appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF020617),
+              backgroundColor: Colors.black,
               foregroundColor: Color(0xFFF8FAFC),
               elevation: 0,
               centerTitle: true,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+              ),
               titleTextStyle: TextStyle(
                 color: Color(0xFFF8FAFC),
                 fontSize: 20,
@@ -127,20 +139,24 @@ class MyApp extends StatelessWidget {
               ),
             ),
             cardTheme: CardThemeData(
-              color: const Color(0xFF1E293B),
-              elevation: 0,
+              color: Colors.black,
+              elevation: 4,
+              shadowColor: Colors.white.withValues(alpha: 0.2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFF334155), width: 1),
+                side: const BorderSide(color: Colors.white, width: 1),
               ),
             ),
             bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-              backgroundColor: Color(0xFF020617),
+              backgroundColor: Colors.black,
               selectedItemColor: Color(0xFF3B82F6),
               unselectedItemColor: Color(0xFF94A3B8),
               showUnselectedLabels: true,
               type: BottomNavigationBarType.fixed,
               elevation: 0,
+            ),
+            bottomSheetTheme: const BottomSheetThemeData(
+              backgroundColor: Colors.black,
             ),
             floatingActionButtonTheme: const FloatingActionButtonThemeData(
               backgroundColor: Color(0xFF3B82F6),

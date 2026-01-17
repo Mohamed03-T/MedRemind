@@ -50,13 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return difference.isNegative ? '-$timeStr' : timeStr;
   }
 
-  Color _getCountdownColor(DateTime scheduledTime) {
+  Color _getCountdownColor(DateTime scheduledTime, Brightness brightness) {
     final now = DateTime.now();
     final difference = scheduledTime.difference(now);
+    final isDark = brightness == Brightness.dark;
     
     if (difference.isNegative) return Colors.red;
-    if (difference.inHours >= 1) return Colors.green;
-    if (difference.inMinutes >= 30) return Colors.orange;
+    if (difference.inHours >= 1) return isDark ? Colors.green : const Color(0xFF059669);
+    if (difference.inMinutes >= 30) return isDark ? Colors.orange : const Color(0xFFD97706);
     return Colors.red;
   }
 
@@ -64,6 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.appTitle),
@@ -73,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer2<MedicationProvider, CalendarProvider>(
         builder: (context, medProvider, calProvider, child) {
-          final theme = Theme.of(context);
           final now = DateTime.now();
           
           // Get today's occurrences
@@ -115,6 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           }
 
+          final Color statBlue = isDark ? Colors.blue : const Color(0xFF3B82F6);
+          final Color statGreen = isDark ? Colors.green : const Color(0xFF10B981);
+          final Color statOrange = isDark ? Colors.orange : const Color(0xFFF59E0B);
+
           return CustomScrollView(
             slivers: [
               // Statistics Section
@@ -128,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         l10n.total,
                         todayOccurrences.length.toString(),
                         Icons.medication,
-                        Colors.blue,
+                        statBlue,
                       ),
                       const SizedBox(width: 12),
                       _buildStatCard(
@@ -136,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         l10n.taken,
                         completedList.length.toString(),
                         Icons.check_circle,
-                        Colors.green,
+                        statGreen,
                       ),
                       const SizedBox(width: 12),
                       _buildStatCard(
@@ -144,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         l10n.remaining,
                         pendingList.length.toString(),
                         Icons.pending_actions,
-                        Colors.orange,
+                        statOrange,
                       ),
                     ],
                   ),
@@ -158,11 +165,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.1), width: 2),
+                      border: Border.all(
+                        color: isDark ? Colors.white : theme.colorScheme.primary.withValues(alpha: 0.1),
+                        width: 2,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.shadowColor.withValues(alpha: 0.05),
-                          blurRadius: 10,
+                          color: isDark ? Colors.white.withValues(alpha: 0.15) : theme.colorScheme.onSurface.withValues(alpha: 0.03),
+                          blurRadius: isDark ? 12 : 15,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -201,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: _getCountdownColor(nextDose.scheduledTime).withValues(alpha: 0.05),
+                            color: _getCountdownColor(nextDose.scheduledTime, theme.brightness).withValues(alpha: isDark ? 0.05 : 0.08),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
@@ -210,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
-                              color: _getCountdownColor(nextDose.scheduledTime),
+                              color: _getCountdownColor(nextDose.scheduledTime, theme.brightness),
                               letterSpacing: 2,
                             ),
                           ),
@@ -304,18 +315,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
+          border: Border.all(
+            color: isDark ? Colors.white : color.withValues(alpha: 0.1),
+            width: isDark ? 1.0 : 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: theme.shadowColor.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : theme.shadowColor.withValues(alpha: 0.02),
+              blurRadius: isDark ? 8 : 10,
+              offset: isDark ? Offset.zero : const Offset(0, 4),
             ),
           ],
         ),
@@ -349,14 +364,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final med = occ.medication;
     final l10n = AppLocalizations.of(context)!;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
+      elevation: isDark ? 4 : 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: isDone ? Colors.green.withValues(alpha: 0.1) : theme.colorScheme.primary.withValues(alpha: 0.1),
+          color: isDark 
+              ? Colors.white 
+              : (isDone ? Colors.green.withValues(alpha: 0.1) : theme.colorScheme.primary.withValues(alpha: 0.1)),
         ),
       ),
       child: InkWell(
@@ -437,14 +455,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.timer_outlined, size: 14, color: _getCountdownColor(occ.scheduledTime).withValues(alpha: 0.5)),
+                          Icon(Icons.timer_outlined, size: 14, color: _getCountdownColor(occ.scheduledTime, theme.brightness).withValues(alpha: 0.5)),
                           const SizedBox(width: 4),
                           Text(
                             _getCountdownText(occ.scheduledTime, l10n.localeName),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: _getCountdownColor(occ.scheduledTime),
+                              color: _getCountdownColor(occ.scheduledTime, theme.brightness),
                             ),
                           ),
                         ],

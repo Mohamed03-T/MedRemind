@@ -92,6 +92,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Future<void> _playPreview(String soundId) async {
     if (soundId == 'default') return;
+    
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    if (!settings.soundEnabled) return;
+
     try {
       await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource('sounds/$soundId.mp3'));
@@ -235,7 +239,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          color: theme.brightness == Brightness.dark ? Colors.black : null,
+          gradient: theme.brightness == Brightness.dark ? null : LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
@@ -389,12 +394,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         border: Border(
           top: BorderSide(
-            color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+            color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.05),
+            width: theme.brightness == Brightness.dark ? 1 : 1,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.brightness == Brightness.dark ? theme.primaryColor.withValues(alpha: 0.1) : theme.shadowColor.withValues(alpha: 0.1),
+            color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.15) : theme.shadowColor.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),

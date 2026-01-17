@@ -159,9 +159,16 @@ class MedicationDetailScreen extends StatelessWidget {
   Widget _buildDetailCard(BuildContext context,
       {required String title, required String value, required IconData icon}) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: isDark ? 4 : 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+        side: isDark 
+          ? const BorderSide(color: Colors.white, width: 1)
+          : BorderSide.none,
+      ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
