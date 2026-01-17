@@ -84,6 +84,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       final dt = DateTime(_focusedDate.year, _focusedDate.month, d);
       final isToday = DateUtils.isSameDay(dt, DateTime.now());
       final isPast = dt.isBefore(DateTime(nowTime.year, nowTime.month, nowTime.day));
+      final isDark = theme.brightness == Brightness.dark;
       
       // Calculate completion percentage based on specific occurrences
       List<DateTime> dayOccurrences = [];
@@ -109,33 +110,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       // Color/Gradient logic
       List<Color> gradientColors = theme.brightness == Brightness.light 
-          ? [Colors.white, Colors.white] 
-          : [theme.colorScheme.surface, theme.colorScheme.surface];
+          ? [Colors.white, const Color(0xFFF1F5F9)] 
+          : [const Color(0xFF1E293B), const Color(0xFF0F172A)];
       Color borderColor = theme.brightness == Brightness.light 
-          ? Colors.grey.shade200 
-          : Colors.white;
+          ? const Color(0xFFE2E8F0) 
+          : const Color(0xFF334155);
       Color textColor = theme.colorScheme.onSurface;
       Color subTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
       if (totalTasks > 0) {
         if (percentage == 1.0) {
-          gradientColors = [Colors.green.shade500, Colors.green.shade700];
-          borderColor = Colors.green.shade700;
+          gradientColors = [const Color(0xFF10B981), const Color(0xFF059669)];
+          borderColor = Colors.transparent;
           textColor = Colors.white;
-          subTextColor = Colors.white.withValues(alpha: 0.82);
+          subTextColor = Colors.white.withValues(alpha: 0.9);
         } else if (percentage >= 0.5) {
-          gradientColors = [theme.colorScheme.primary, theme.colorScheme.primary.withValues(alpha: 0.8)];
-          borderColor = theme.colorScheme.primary;
+          gradientColors = [const Color(0xFF6366F1), const Color(0xFF4F46E5)];
+          borderColor = Colors.transparent;
           textColor = Colors.white;
-          subTextColor = Colors.white.withValues(alpha: 0.82);
+          subTextColor = Colors.white.withValues(alpha: 0.9);
         } else if (percentage > 0) {
-          gradientColors = [Colors.orange.shade400, Colors.orange.shade600];
-          borderColor = Colors.orange.shade700;
+          gradientColors = [const Color(0xFFF59E0B), const Color(0xFFD97706)];
+          borderColor = Colors.transparent;
           textColor = Colors.white;
-          subTextColor = Colors.white.withValues(alpha: 0.82);
-        } else {
-          // No tasks done yet
-          borderColor = theme.brightness == Brightness.light ? Colors.grey.shade300 : Colors.white;
+          subTextColor = Colors.white.withValues(alpha: 0.9);
         }
       }
 
@@ -173,98 +171,100 @@ class _CalendarScreenState extends State<CalendarScreen> {
           tag: 'day_$dt',
            child: Container(
             key: isToday ? todayKey : null,
-            margin: const EdgeInsets.all(6),
+            margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: borderColor,
-                width: isToday ? 3.0 : 1.0,
+                width: isToday ? 2.5 : 1.0,
               ),
               boxShadow: [
-                BoxShadow(
-                  color: gradientColors[0] == Colors.white ||
-                          gradientColors[0] == theme.colorScheme.surface
-                      ? theme.shadowColor.withValues(alpha: 0.1)
-                      : gradientColors[1].withValues(alpha: 0.4),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
+                if (totalTasks > 0 && percentage > 0)
+                  BoxShadow(
+                    color: gradientColors[0].withValues(alpha: isDark ? 0.3 : 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  )
+                else
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
               ],
             ),
             child: Stack(
-                    children: [
-                      // Background Circle for Day Number (Subtle)
-                      Positioned(
-                        right: -10,
-                        top: -10,
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+              children: [
+                // Subtle shine/decoration
+                if (totalTasks > 0 && percentage > 0)
+                  Positioned(
+                    right: -15,
+                    top: -15,
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
                       ),
-                      // Main Content
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Header: Today Badge and Percentage
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                if (isToday)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      l10n.today,
-                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                else
-                                  const SizedBox.shrink(),
-                                if (totalTasks > 0)
-                                  Text(
-                                    '${(percentage * 100).toInt()}%',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      color: subTextColor,
-                                    ),
-                                  ),
-                              ],
+                    ),
+                  ),
+                // Main Content
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (isToday)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: textColor.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                l10n.today,
+                                style: TextStyle(color: textColor, fontSize: 8, fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          else
+                            const SizedBox.shrink(),
+                          if (totalTasks > 0)
+                            Text(
+                              '${(percentage * 100).toInt()}%',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: subTextColor,
+                              ),
                             ),
-                      // Day Number
+                        ],
+                      ),
                       Text(
                         d.toString(),
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: textColor,
                           letterSpacing: -1,
                         ),
                       ),
-                      // Footer: Stats
                       if (totalTasks > 0)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                              _buildMiniIndicator(Icons.arrow_upward, dayTaken, Colors.green, subTextColor),
-                              const SizedBox(width: 8),
-                              _buildMiniIndicator(Icons.arrow_downward, dayMissed, Colors.red, subTextColor),
-                            ],
+                            _buildMiniIndicator(Icons.arrow_upward, dayTaken, const Color(0xFF10B981), percentage > 0),
+                            const SizedBox(width: 8),
+                            _buildMiniIndicator(Icons.arrow_downward, dayMissed, const Color(0xFFEF4444), percentage > 0),
+                          ],
                         )
                       else
                         const SizedBox(height: 10),
@@ -306,13 +306,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 8),
           if (_mode == CalendarViewMode.days)
             Expanded(
               child: GridView.count(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 crossAxisCount: 3,
-                childAspectRatio: 0.85,
+                childAspectRatio: 0.82,
                 children: dayWidgets,
               ),
             )
@@ -337,23 +336,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildMiniIndicator(IconData icon, int count, Color defaultColor, Color adaptiveColor) {
+  Widget _buildMiniIndicator(IconData icon, int count, Color defaultColor, bool isColored) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          size: 11,
-          // Use the specific color (Green/Red) if text isn't white (colored background)
-          color: adaptiveColor.computeLuminance() > 0.8 ? adaptiveColor : defaultColor,
+          size: 13,
+          color: isColored ? Colors.white : defaultColor,
         ),
-        const SizedBox(width: 2),
+        const SizedBox(width: 3),
         Text(
           count.toString(),
           style: TextStyle(
             fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: adaptiveColor,
+            fontWeight: FontWeight.bold,
+            color: isColored ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
           ),
         ),
       ],

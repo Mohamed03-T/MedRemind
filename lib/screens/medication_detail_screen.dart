@@ -1,136 +1,276 @@
+import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:medremind/l10n/app_localizations.dart';
 import '../models/medication.dart';
 import '../providers/calendar_provider.dart';
 
-class MedicationDetailScreen extends StatelessWidget {
+class MedicationDetailScreen extends StatefulWidget {
   final Medication medication;
 
   const MedicationDetailScreen({super.key, required this.medication});
 
   @override
+  State<MedicationDetailScreen> createState() => _MedicationDetailScreenState();
+}
+
+class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  String _getCountdownText(DateTime scheduledTime) {
+    final now = DateTime.now();
+    final difference = scheduledTime.difference(now);
+    final absDiff = difference.abs();
+
+    final hours = absDiff.inHours;
+    final minutes = absDiff.inMinutes % 60;
+    final seconds = absDiff.inSeconds % 60;
+    
+    String timeStr = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return difference.isNegative ? '-$timeStr' : timeStr;
+  }
+
+  Color _getCountdownColor(DateTime scheduledTime, Brightness brightness) {
+    final now = DateTime.now();
+    final difference = scheduledTime.difference(now);
+    final isDark = brightness == Brightness.dark;
+    
+    if (difference.isNegative) return Colors.red;
+    if (difference.inHours >= 1) return isDark ? Colors.green : const Color(0xFF059669);
+    if (difference.inMinutes >= 30) return isDark ? Colors.orange : const Color(0xFFD97706);
+    return Colors.red;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.medicationDetails),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.medication,
-                  size: 64,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            _buildSectionHeader(context, l10n.stepBasicInfo, Icons.info_outline),
-            _buildDetailCard(
-              context,
-              title: l10n.medicationName,
-              value: medication.name,
-              icon: Icons.label,
-            ),
-            _buildDetailCard(
-              context,
-              title: l10n.dosage,
-              value: medication.dosage,
-              icon: Icons.scale,
-            ),
-            
-            const SizedBox(height: 16),
-            _buildSectionHeader(context, l10n.medicationSchedule, Icons.schedule),
-            if (medication.year != null && medication.month != null && medication.day != null)
-              _buildDetailCard(
-                context,
-                title: l10n.doseDate,
-                value: '${medication.year}/${medication.month}/${medication.day}',
-                icon: Icons.event,
-              ),
-            _buildDetailCard(
-              context,
-              title: l10n.firstDoseTime,
-              value: medication.timeText.split(' ').last, // Just the time part
-              icon: Icons.access_time,
-            ),
-            _buildDetailCard(
-              context,
-              title: l10n.dosingSchedule,
-              value: _getFrequencyText(context, medication),
-              icon: Icons.repeat,
-            ),
-            if (medication.endDate != null)
-              _buildDetailCard(
-                context,
-                title: l10n.stopDate,
-                value: medication.endDate!,
-                icon: Icons.calendar_today,
-              ),
-              
-            const SizedBox(height: 16),
-            _buildSectionHeader(context, l10n.dosageAndStock, Icons.settings_outlined),
-            if (medication.totalPills != null)
-              _buildDetailCard(
-                context,
-                title: l10n.stockAmount,
-                value: medication.totalPills.toString(),
-                icon: Icons.inventory,
-              ),
-            _buildDetailCard(
-              context,
-              title: l10n.notificationSound,
-              value: medication.sound ?? l10n.defaultSound,
-              icon: Icons.volume_up,
-            ),
+      body: Consumer<CalendarProvider>(
+        builder: (context, calProvider, child) {
+          final now = DateTime.now();
+          final todayOccurrences = widget.medication.getOccurrencesForDay(now);
+          todayOccurrences.sort();
 
-            const SizedBox(height: 32),
-            // Action Button
-            Consumer<CalendarProvider>(
-              builder: (context, calProvider, child) {
-                final now = DateTime.now();
-                return SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 5,
+          final timesTaken = calProvider.completionsFor(now, widget.medication.id!);
+          
+          DateTime? nextPending;
+          if (timesTaken < todayOccurrences.length) {
+            nextPending = todayOccurrences[timesTaken];
+          }
+
+          // Decide if we should show the "Due" card
+          // Window: if scheduled time is within 60 minutes in the future OR already passed
+          bool isDue = false;
+          if (nextPending != null) {
+            final diff = nextPending.difference(now);
+            if (diff.inMinutes <= 60) {
+              isDue = true;
+            }
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isDue && nextPending != null) ...[
+                  _buildDueCard(context, nextPending, calProvider, l10n),
+                  const SizedBox(height: 24),
+                ],
+
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    onPressed: () {
-                      calProvider.addOccurrenceCompletion(now, medication.id!);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.doseLogged)),
-                      );
-                    },
-                    icon: const Icon(Icons.check_circle),
-                    label: Text(
-                      l10n.logDoseNow,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    child: Icon(
+                      Icons.medication,
+                      size: 64,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
-                );
-              }
+                ),
+                const SizedBox(height: 32),
+                
+                _buildSectionHeader(context, l10n.stepBasicInfo, Icons.info_outline),
+                _buildDetailCard(
+                  context,
+                  title: l10n.medicationName,
+                  value: widget.medication.name,
+                  icon: Icons.label,
+                ),
+                _buildDetailCard(
+                  context,
+                  title: l10n.dosage,
+                  value: widget.medication.dosage,
+                  icon: Icons.scale,
+                ),
+                
+                const SizedBox(height: 16),
+                _buildSectionHeader(context, l10n.medicationSchedule, Icons.schedule),
+                if (widget.medication.year != null && widget.medication.month != null && widget.medication.day != null)
+                  _buildDetailCard(
+                    context,
+                    title: l10n.doseDate,
+                    value: '${widget.medication.year}/${widget.medication.month}/${widget.medication.day}',
+                    icon: Icons.event,
+                  ),
+                _buildDetailCard(
+                  context,
+                  title: l10n.firstDoseTime,
+                  value: widget.medication.timeText.split(' ').last,
+                  icon: Icons.access_time,
+                ),
+                _buildDetailCard(
+                  context,
+                  title: l10n.dosingSchedule,
+                  value: _getFrequencyText(context, widget.medication),
+                  icon: Icons.repeat,
+                ),
+                if (widget.medication.endDate != null)
+                  _buildDetailCard(
+                    context,
+                    title: l10n.stopDate,
+                    value: widget.medication.endDate!,
+                    icon: Icons.calendar_today,
+                  ),
+                  
+                const SizedBox(height: 16),
+                _buildSectionHeader(context, l10n.dosageAndStock, Icons.settings_outlined),
+                if (widget.medication.totalPills != null)
+                  _buildDetailCard(
+                    context,
+                    title: l10n.stockAmount,
+                    value: widget.medication.totalPills.toString(),
+                    icon: Icons.inventory,
+                  ),
+                _buildDetailCard(
+                  context,
+                  title: l10n.notificationSound,
+                  value: widget.medication.sound ?? l10n.defaultSound,
+                  icon: Icons.volume_up,
+                ),
+                const SizedBox(height: 40),
+              ],
             ),
-            const SizedBox(height: 40),
-          ],
+          );
+        }
+      ),
+    );
+  }
+
+  Widget _buildDueCard(BuildContext context, DateTime nextPending, CalendarProvider calProvider, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final countdownColor = _getCountdownColor(nextPending, theme.brightness);
+    final locale = Localizations.localeOf(context).languageCode;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white : theme.colorScheme.primary.withValues(alpha: 0.1),
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.15) : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+            blurRadius: isDark ? 12 : 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: countdownColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.timer, color: countdownColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.nextDose(widget.medication.name),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      l10n.atTime(DateFormat.Hm(locale).format(nextPending)),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _getCountdownText(nextPending),
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: countdownColor,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? Colors.white : theme.colorScheme.primary,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: isDark ? 0 : 4,
+              ),
+              onPressed: () {
+                calProvider.addOccurrenceCompletion(DateTime.now(), widget.medication.id!);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.doseLogged)),
+                );
+              },
+              icon: const Icon(Icons.check_circle),
+              label: Text(
+                l10n.logDoseNow,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
