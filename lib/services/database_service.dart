@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:flutter/foundation.dart';
 import '../models/medication.dart';
 
 class DatabaseService {
@@ -89,7 +90,7 @@ class DatabaseService {
       await db.execute('ALTER TABLE $table ADD COLUMN $column $type');
     } catch (e) {
       // Column might already exist
-      print('Column $column might already exist in $table: $e');
+      debugPrint('Column $column might already exist in $table: $e');
     }
   }
 

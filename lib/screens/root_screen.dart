@@ -26,29 +26,77 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.home), label: l10n.home),
-          BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: l10n.calendar),
-          BottomNavigationBarItem(icon: const Icon(Icons.medication), label: l10n.medications),
-          BottomNavigationBarItem(icon: const Icon(Icons.settings), label: l10n.settings),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  widthFactor: 1.0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: isDark
+                        ? RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 1.5,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.18),
+                              Colors.grey.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.6, 1.0],
+                          )
+                        : RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 2.0,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.grey.withValues(alpha: 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: _pages[_currentIndex],
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (i) => setState(() => _currentIndex = i),
+              items: [
+                BottomNavigationBarItem(icon: const Icon(Icons.home), label: l10n.home),
+                BottomNavigationBarItem(icon: const Icon(Icons.calendar_today), label: l10n.calendar),
+                BottomNavigationBarItem(icon: const Icon(Icons.medication), label: l10n.medications),
+                BottomNavigationBarItem(icon: const Icon(Icons.settings), label: l10n.settings),
+              ],
+            ),
+            floatingActionButton: _currentIndex == 2
+                ? FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AddMedicationScreen()),
+                      );
+                    },
+                    child: const Icon(Icons.add),
+                  )
+                : null,
+          ),
         ],
       ),
-        floatingActionButton: _currentIndex == 2
-            ? FloatingActionButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AddMedicationScreen()),
-                  );
-                },
-                child: const Icon(Icons.add),
-              )
-            : null,
     );
   }
 }

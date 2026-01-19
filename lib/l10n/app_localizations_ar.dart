@@ -385,6 +385,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get day => 'يوم';
 
   @override
+  String get month => 'شهر';
+
+  @override
   String get setEndDate => 'تحديد تاريخ انتهاء يدوياً';
 
   @override
@@ -444,6 +447,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get days => 'أيام';
+
+  @override
+  String get months => 'أشهر';
 
   @override
   String get noTasks => 'لا يوجد مهام لهذا اليوم';

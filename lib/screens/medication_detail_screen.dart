@@ -62,13 +62,57 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.medicationDetails),
-        centerTitle: true,
-      ),
-      body: Consumer<CalendarProvider>(
-        builder: (context, calProvider, child) {
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  widthFactor: 1.0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: isDark
+                        ? RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 1.5,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.18),
+                              Colors.grey.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.6, 1.0],
+                          )
+                        : RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 2.0,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.grey.withValues(alpha: 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: Text(l10n.medicationDetails),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+            ),
+            body: Consumer<CalendarProvider>(
+              builder: (context, calProvider, child) {
           final now = DateTime.now();
           final todayOccurrences = widget.medication.getOccurrencesForDay(now);
           todayOccurrences.sort();
@@ -178,7 +222,10 @@ class _MedicationDetailScreenState extends State<MedicationDetailScreen> {
               ],
             ),
           );
-        }
+        },
+      ),
+    ),
+        ],
       ),
     );
   }

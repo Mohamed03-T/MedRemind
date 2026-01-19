@@ -463,10 +463,16 @@ class NotificationService {
       return;
     }
 
-    // For interval-based scheduling (minutes/hours/days)
+    // For interval-based scheduling (minutes/hours/days/months)
     final int interval = medication.interval ?? 1;
     final unit = medication.intervalUnit;
-    final int intervalSeconds = (unit == 'hours') ? interval * 3600 : (unit == 'minutes' ? interval * 60 : interval * 86400);
+    
+    // Note: for months we use an approximation for seconds, but we handle it better in the loop
+    final int intervalSeconds = (unit == 'hours') 
+        ? interval * 3600 
+        : (unit == 'minutes' 
+            ? interval * 60 
+            : (unit == 'days' ? interval * 86400 : interval * 30 * 86400));
     
     final List<tz.TZDateTime> occurrences = [];
     // Determine scheduling limit: use endDate if provided, otherwise a default horizon
@@ -477,31 +483,36 @@ class NotificationService {
         final end = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
         limit = tz.TZDateTime(tz.local, end.year, end.month, end.day, 23, 59);
       } catch (e) {
-        limit = now.add(const Duration(days: 14));
+        limit = now.add(const Duration(days: 30)); // 1 month horizon if error
       }
     } else {
-      final horizonDays = 14; // Schedule for 2 weeks to stay within system limits
+      final horizonDays = 60; // Increased horizon for months/days
       limit = now.add(Duration(days: horizonDays));
     }
     
     // Find first occurrence on or after NOW based on ANCHOR
-    final int secondsFromAnchorToNow = now.difference(anchor).inSeconds;
-    int intervalsNeeded;
-    if (secondsFromAnchorToNow <= 0) {
-      intervalsNeeded = 0;
+    tz.TZDateTime current;
+    if (unit == 'months') {
+      current = anchor;
+      while (current.isBefore(now)) {
+        current = tz.TZDateTime(tz.local, current.year, current.month + interval, current.day, current.hour, current.minute);
+      }
     } else {
-      // Use integer division for ceiling (a + b - 1) ~/ b
-      intervalsNeeded = (secondsFromAnchorToNow + intervalSeconds - 1) ~/ intervalSeconds;
+      final int secondsFromAnchorToNow = now.difference(anchor).inSeconds;
+      int intervalsNeeded = (secondsFromAnchorToNow <= 0) ? 0 : (secondsFromAnchorToNow + intervalSeconds - 1) ~/ intervalSeconds;
+      current = anchor.add(Duration(seconds: intervalsNeeded * intervalSeconds));
     }
 
-    tz.TZDateTime current = anchor.add(Duration(seconds: intervalsNeeded * intervalSeconds));
     int seq = 0;
-    
     while (current.isBefore(limit) || current.isAtSameMomentAs(limit)) {
       occurrences.add(current);
-      current = current.add(Duration(seconds: intervalSeconds));
+      if (unit == 'months') {
+        current = tz.TZDateTime(tz.local, current.year, current.month + interval, current.day, current.hour, current.minute);
+      } else {
+        current = current.add(Duration(seconds: intervalSeconds));
+      }
       seq++;
-      if (seq >= 50) break; // Limit to 50 occurrences to prevent hitting system alarm limits (500 total)
+      if (seq >= 50) break; 
     }
 
     int idx = 0;

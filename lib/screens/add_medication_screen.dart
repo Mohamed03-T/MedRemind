@@ -205,7 +205,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     );
 
     String finalDosage = '$doseAmount ${_medType == 'pill' ? l10n.pillUnit : (_medType == 'liquid' ? l10n.ml : l10n.unit)}';
-    String freqLabel = _frequencyType == 'daily' ? l10n.dailyEveryDay : '${l10n.every} $_intervalValue ${_intervalUnit == 'hours' ? l10n.hours : (_intervalUnit == 'minutes' ? l10n.minute : l10n.day)}';
+    String freqLabel = _frequencyType == 'daily' 
+      ? l10n.dailyEveryDay 
+      : '${l10n.every} $_intervalValue ${_intervalUnit == 'hours' ? l10n.hours : (_intervalUnit == 'minutes' ? l10n.minutes : (_intervalUnit == 'days' ? l10n.days : l10n.months))}';
 
     int totalUnits = containerCount * unitsPerContainer;
     String? calculatedEndDateStr;
@@ -220,6 +222,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           dosesPerDay = (24.0 * 60) / _intervalValue;
         } else if (_intervalUnit == 'days') {
           dosesPerDay = 1.0 / _intervalValue;
+        } else if (_intervalUnit == 'months') {
+          dosesPerDay = 1.0 / (_intervalValue * 30.0);
         }
       }
       
@@ -255,44 +259,76 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Container(
-        decoration: BoxDecoration(
-          color: theme.brightness == Brightness.dark ? Colors.black : null,
-          gradient: theme.brightness == Brightness.dark ? null : LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.primaryColor.withValues(alpha: 0.05),
-              theme.scaffoldBackgroundColor,
-              Colors.purple.withValues(alpha: 0.05),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              _buildProgressIndicator(),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  onPageChanged: (int index) {
-                    setState(() => _currentStep = index);
-                  },
-                  children: [
-                    _buildStep1Page(),
-                    _buildStep2Page(),
-                    _buildStep3Page(),
-                  ],
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
+        children: [
+          // Glow overlay sits above the solid background but beneath UI
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  widthFactor: 1.0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: theme.brightness == Brightness.dark
+                        ? RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 1.5,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.18),
+                              Colors.grey.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.6, 1.0],
+                          )
+                        : RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 2.0,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.grey.withValues(alpha: 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
+                    ),
+                  ),
                 ),
               ),
-              _buildBottomNavigation(),
-            ],
+            ),
           ),
-        ),
+
+          // Main scaffold content (transparent so glow shows through)
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  _buildProgressIndicator(),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const BouncingScrollPhysics(),
+                      onPageChanged: (int index) {
+                        setState(() => _currentStep = index);
+                      },
+                      children: [
+                        _buildStep1Page(),
+                        _buildStep2Page(),
+                        _buildStep3Page(),
+                      ],
+                    ),
+                  ),
+                  _buildBottomNavigation(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -414,8 +450,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         border: Border(
           top: BorderSide(
-            color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.05),
-            width: theme.brightness == Brightness.dark ? 1 : 1,
+            color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+            width: 1,
           ),
         ),
         boxShadow: [
@@ -501,7 +537,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide(
-                  color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+                  color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.1),
                   width: 2.0,
                 ),
               ),
@@ -543,7 +579,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
                 width: 2,
               ),
             ),
@@ -605,7 +641,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
                 width: 2,
               ),
             ),
@@ -635,7 +671,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
                 width: 2,
               ),
             ),
@@ -654,7 +690,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
                 width: 2,
               ),
             ),
@@ -700,7 +736,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           border: Border.all(
             color: isSelected 
               ? (theme.brightness == Brightness.dark ? Colors.white : theme.primaryColor) 
-              : (theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1)),
+              : (theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
             width: isSelected ? 3 : 2.0,
           ),
         ),
@@ -820,63 +856,116 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           if (_frequencyType == 'interval') ...[
             const SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: theme.brightness == Brightness.dark ? Colors.white : theme.primaryColor.withValues(alpha: 0.2),
+                  color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : theme.primaryColor.withValues(alpha: 0.1),
                   width: 2.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.brightness == Brightness.dark ? theme.primaryColor.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
+                    color: theme.primaryColor.withValues(alpha: 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.primaryColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.repeat, color: theme.primaryColor, size: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.repeat, color: theme.primaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.every, 
+                        style: TextStyle(
+                          fontSize: 14, 
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        )
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(l10n.every, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 4),
-                        _buildStepButton(Icons.remove, () {
-                          if (_intervalValue > 1) setState(() => _intervalValue--);
-                        }, theme.primaryColor),
-                        const SizedBox(width: 6),
-                        Text('$_intervalValue', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 6),
-                        _buildStepButton(Icons.add, () {
-                          setState(() => _intervalValue++);
-                        }, theme.primaryColor),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: DropdownButton<String>(
-                            value: _intervalUnit,
-                            isExpanded: true,
-                            underline: const SizedBox(),
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 16),
-                            items: [
-                              DropdownMenuItem(value: 'minutes', child: Text(l10n.minute, style: const TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'hours', child: Text(l10n.hour, style: const TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'days', child: Text(l10n.day, style: const TextStyle(fontSize: 12))),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      // Number Selector
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildStepButton(Icons.remove, () {
+                                if (_intervalValue > 1) setState(() => _intervalValue--);
+                              }, theme.primaryColor.withValues(alpha: 0.8)),
+                              Text(
+                                '$_intervalValue', 
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)
+                              ),
+                              _buildStepButton(Icons.add, () {
+                                setState(() => _intervalValue++);
+                              }, theme.primaryColor.withValues(alpha: 0.8)),
                             ],
-                            onChanged: (v) => setState(() => _intervalUnit = v!),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Unit Selector
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: theme.primaryColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _intervalUnit,
+                              isExpanded: true,
+                              dropdownColor: theme.colorScheme.surface,
+                              icon: Icon(Icons.keyboard_arrow_down, color: theme.primaryColor),
+                              style: TextStyle(
+                                color: theme.brightness == Brightness.dark ? Colors.white : theme.primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                fontFamily: 'Roboto',
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'minutes', 
+                                  child: Text(l10n.minute, style: TextStyle(color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.onSurface)),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'hours', 
+                                  child: Text(l10n.hour, style: TextStyle(color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.onSurface)),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'days', 
+                                  child: Text(l10n.day, style: TextStyle(color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.onSurface)),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'months', 
+                                  child: Text(l10n.month, style: TextStyle(color: theme.brightness == Brightness.dark ? Colors.white : theme.colorScheme.onSurface)),
+                                ),
+                              ],
+                              onChanged: (v) => setState(() => _intervalUnit = v!),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -891,7 +980,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               border: Border.all(
                 color: _hasEndDate 
                   ? Colors.red 
-                  : (theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1)),
+                  : (theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
                 width: 2.0,
               ),
               boxShadow: [
@@ -945,7 +1034,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           color: isSelected ? theme.primaryColor : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? (theme.brightness == Brightness.dark ? Colors.white : Colors.transparent) : (theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1)),
+            color: isSelected 
+              ? (theme.brightness == Brightness.dark ? Colors.white : Colors.transparent) 
+              : (theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
             width: 2.0,
           ),
           boxShadow: [
@@ -1025,7 +1116,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 border: Border.all(
                   color: isSelected 
                     ? (theme.brightness == Brightness.dark ? Colors.white : theme.primaryColor) 
-                    : (theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1)),
+                    : (theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
                   width: isSelected ? 3 : 2,
                 ),
                 boxShadow: [
@@ -1078,7 +1169,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: theme.brightness == Brightness.dark ? Colors.white : theme.primaryColor.withValues(alpha: 0.1),
+                color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : theme.primaryColor.withValues(alpha: 0.1),
                 width: 1.5,
               ),
               boxShadow: [
@@ -1122,7 +1213,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: theme.brightness == Brightness.dark ? Colors.white : Colors.black.withValues(alpha: 0.1),
+            color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1),
             width: 2.0,
           ),
           boxShadow: [

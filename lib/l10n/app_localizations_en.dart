@@ -386,6 +386,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get day => 'Day';
 
   @override
+  String get month => 'Month';
+
+  @override
   String get setEndDate => 'Set End Date Manually';
 
   @override
@@ -445,6 +448,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get days => 'Days';
+
+  @override
+  String get months => 'Months';
 
   @override
   String get noTasks => 'No tasks for this day';

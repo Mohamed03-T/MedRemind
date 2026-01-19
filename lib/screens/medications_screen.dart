@@ -11,8 +11,11 @@ class MedicationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(l10n.medications),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         centerTitle: true,
       ),
       body: Consumer<MedicationProvider>(

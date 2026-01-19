@@ -83,9 +83,7 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> _saveToPrefs(String key, dynamic value) async {
     try {
-      if (_prefs == null) {
-        _prefs = await SharedPreferences.getInstance();
-      }
+      _prefs ??= await SharedPreferences.getInstance();
       if (value is bool) {
         await _prefs!.setBool(key, value);
       } else if (value is String) {

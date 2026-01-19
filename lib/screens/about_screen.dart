@@ -8,15 +8,60 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.aboutApp),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  widthFactor: 1.0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: isDark
+                        ? RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 1.5,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.18),
+                              Colors.grey.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.6, 1.0],
+                          )
+                        : RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 2.0,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.grey.withValues(alpha: 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: Text(l10n.aboutApp),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // User Credit
@@ -119,6 +164,9 @@ class AboutScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    ),
+        ],
       ),
     );
   }

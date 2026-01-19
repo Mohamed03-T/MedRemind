@@ -818,6 +818,12 @@ abstract class AppLocalizations {
   /// **'يوم'**
   String get day;
 
+  /// No description provided for @month.
+  ///
+  /// In ar, this message translates to:
+  /// **'شهر'**
+  String get month;
+
   /// No description provided for @setEndDate.
   ///
   /// In ar, this message translates to:
@@ -937,6 +943,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أيام'**
   String get days;
+
+  /// No description provided for @months.
+  ///
+  /// In ar, this message translates to:
+  /// **'أشهر'**
+  String get months;
 
   /// No description provided for @noTasks.
   ///

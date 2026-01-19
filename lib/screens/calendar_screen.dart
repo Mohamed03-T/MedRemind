@@ -324,58 +324,102 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        title: Text(
-          DateFormat.yMMMM(locale).format(_focusedDate),
-          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(locale == 'ar' ? Icons.chevron_right : Icons.chevron_left, color: theme.colorScheme.primary),
-          onPressed: _prevMonth,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(locale == 'ar' ? Icons.chevron_left : Icons.chevron_right, color: theme.colorScheme.primary),
-            onPressed: _nextMonth,
-          ),
-        ],
-      ),
-      body: Column(
+    return Container(
+      color: theme.scaffoldBackgroundColor,
+      child: Stack(
         children: [
-          if (_mode == CalendarViewMode.days)
-            Expanded(
-              child: GridView.count(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                controller: _scrollController,
-                crossAxisCount: 3,
-                childAspectRatio: 0.82,
-                children: dayWidgets,
-              ),
-            )
-          else
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.construction, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'عرض ${_mode.name} قيد التطوير',
-                      style: TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.5), fontSize: 16),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FractionallySizedBox(
+                  heightFactor: 0.5,
+                  widthFactor: 1.0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: theme.brightness == Brightness.dark
+                        ? RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 1.5,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.18),
+                              Colors.grey.withValues(alpha: 0.08),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.6, 1.0],
+                          )
+                        : RadialGradient(
+                            center: const Alignment(0.0, 1.0),
+                            radius: 2.0,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.grey.withValues(alpha: 0.02),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.45, 1.0],
+                          ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
+          ),
+
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              title: Text(
+                DateFormat.yMMMM(locale).format(_focusedDate),
+                style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(locale == 'ar' ? Icons.chevron_right : Icons.chevron_left, color: theme.colorScheme.primary),
+                onPressed: _prevMonth,
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(locale == 'ar' ? Icons.chevron_left : Icons.chevron_right, color: theme.colorScheme.primary),
+                  onPressed: _nextMonth,
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
+                if (_mode == CalendarViewMode.days)
+                  Expanded(
+                    child: GridView.count(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      controller: _scrollController,
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.82,
+                      children: dayWidgets,
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.construction, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'عرض ${_mode.name} قيد التطوير',
+                            style: TextStyle(color: theme.colorScheme.primary.withValues(alpha: 0.5), fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
