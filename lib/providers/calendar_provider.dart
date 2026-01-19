@@ -11,14 +11,14 @@ class CalendarProvider with ChangeNotifier {
 
   CalendarProvider() {
     // Listen for completion updates from notifications
-    NotificationService().onDataChanged = () {
+    NotificationService().addDataChangedListener(() {
       if (_lastLoadedMonth != null) {
         loadForMonth(_lastLoadedMonth!);
       } else {
         _completionsCache.clear();
         notifyListeners();
       }
-    };
+    });
   }
 
   int completionsFor(DateTime date, int medId) {
@@ -72,6 +72,8 @@ class CalendarProvider with ChangeNotifier {
     if (remaining != null && remaining > 0 && remaining <= 5) {
       await NotificationService().showLowStockNotification(medicationId, remaining);
     }
+    // Notify other listeners (e.g., MedicationProvider) to refresh medication data
+    NotificationService().notifyDataChanged();
     
     notifyListeners();
   }

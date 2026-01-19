@@ -127,6 +127,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loudAlarm => 'تنبيه قوي';
 
   @override
+  String get glassPing => 'رنين زجاجي';
+
+  @override
+  String get echoChime => 'صدى الجرس';
+
+  @override
+  String get crystalBell => 'جرس كريستال';
+
+  @override
   String get snoozeTitle => '⏰ غفوة: موعد دواء';
 
   @override

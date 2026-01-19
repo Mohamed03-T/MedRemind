@@ -127,6 +127,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loudAlarm => 'Loud Alarm';
 
   @override
+  String get glassPing => 'Glass Ping';
+
+  @override
+  String get echoChime => 'Echo Chime';
+
+  @override
+  String get crystalBell => 'Crystal Bell';
+
+  @override
   String get snoozeTitle => '⏰ Snooze: Medication Time';
 
   @override

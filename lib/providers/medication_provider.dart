@@ -8,6 +8,13 @@ class MedicationProvider with ChangeNotifier {
   final DatabaseService _dbService = DatabaseService();
   final NotificationService _notificationService = NotificationService();
 
+  MedicationProvider() {
+    // Refresh medication list when completions/stock change via notifications
+    NotificationService().addDataChangedListener(() {
+      loadMedications();
+    });
+  }
+
   List<Medication> get medications => _medications;
 
   Future<void> loadMedications() async {

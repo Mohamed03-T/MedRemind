@@ -326,6 +326,24 @@ abstract class AppLocalizations {
   /// **'تنبيه قوي'**
   String get loudAlarm;
 
+  /// No description provided for @glassPing.
+  ///
+  /// In ar, this message translates to:
+  /// **'رنين زجاجي'**
+  String get glassPing;
+
+  /// No description provided for @echoChime.
+  ///
+  /// In ar, this message translates to:
+  /// **'صدى الجرس'**
+  String get echoChime;
+
+  /// No description provided for @crystalBell.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرس كريستال'**
+  String get crystalBell;
+
   /// No description provided for @snoozeTitle.
   ///
   /// In ar, this message translates to:

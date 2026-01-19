@@ -23,7 +23,28 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final DatabaseService _db = DatabaseService();
-  VoidCallback? onDataChanged;
+  final List<VoidCallback> _dataChangedListeners = [];
+
+  void addDataChangedListener(VoidCallback listener) {
+    _dataChangedListeners.add(listener);
+  }
+
+  void removeDataChangedListener(VoidCallback listener) {
+    _dataChangedListeners.remove(listener);
+  }
+
+  void _notifyDataChanged() {
+    for (final l in List<VoidCallback>.from(_dataChangedListeners)) {
+      try {
+        l();
+      } catch (e) {
+        debugPrint('DataChanged listener error: $e');
+      }
+    }
+  }
+
+  /// Public API to notify listeners that underlying data changed (completions/stock)
+  void notifyDataChanged() => _notifyDataChanged();
   static const MethodChannel _batteryChannel = MethodChannel('com.mohamed.medremind/battery');
 
   Future<String> _getLang() async {
@@ -56,6 +77,9 @@ class NotificationService {
         'default': 'الافتراضي',
         'soft_bell': 'تنبيه هادئ',
         'loud_alarm': 'تنبيه قوي',
+        'glass_ping': 'رنين زجاجي',
+        'echo_chime': 'صدى الجرس',
+        'crystal_bell': 'جرس كريستال',
         'chan_prefix': 'تذكير الدواء',
         'chan_desc_prefix': 'إشعارات تذكير الدواء بنغمة',
       },
@@ -77,6 +101,9 @@ class NotificationService {
         'default': 'Default',
         'soft_bell': 'Soft Bell',
         'loud_alarm': 'Loud Alarm',
+        'glass_ping': 'Glass Ping',
+        'echo_chime': 'Echo Chime',
+        'crystal_bell': 'Crystal Bell',
         'chan_prefix': 'Med Reminder',
         'chan_desc_prefix': 'Medication reminders with sound',
       }
@@ -141,9 +168,12 @@ class NotificationService {
 
     final lang = await _getLang();
     final List<Map<String, String>> channels = [
-      {'id': 'med_reminder_default_v2', 'name': _t('default', lang), 'sound': 'default'},
-      {'id': 'med_reminder_soft_bell_v2', 'name': _t('soft_bell', lang), 'sound': 'soft_bell'},
-      {'id': 'med_reminder_loud_alarm_v2', 'name': _t('loud_alarm', lang), 'sound': 'loud_alarm'},
+      {'id': 'med_reminder_default_v3', 'name': _t('default', lang), 'sound': 'default'},
+      {'id': 'med_reminder_soft_bell_v3', 'name': _t('soft_bell', lang), 'sound': 'soft_bell'},
+      {'id': 'med_reminder_loud_alarm_v3', 'name': _t('loud_alarm', lang), 'sound': 'loud_alarm'},
+      {'id': 'med_reminder_glass_ping_v3', 'name': _t('glass_ping', lang), 'sound': 'glass_ping'},
+      {'id': 'med_reminder_echo_chime_v3', 'name': _t('echo_chime', lang), 'sound': 'echo_chime'},
+      {'id': 'med_reminder_crystal_bell_v3', 'name': _t('crystal_bell', lang), 'sound': 'crystal_bell'},
     ];
 
     for (var chan in channels) {
@@ -202,7 +232,7 @@ class NotificationService {
       }
       
       debugPrint('Medication $medId marked as TAKEN for $timestamp. Remaining: $remaining');
-      onDataChanged?.call();
+      _notifyDataChanged();
     } else if (details.actionId == 'action_snooze') {
       // Reschedule in 10 minutes
       final now = tz.TZDateTime.now(tz.local);
@@ -217,7 +247,7 @@ class NotificationService {
         snoozeTime,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            'med_reminder_default_v2',
+            'med_reminder_default_v3',
             _t('snooze_channel', lang),
             importance: Importance.max,
             priority: Priority.max,
@@ -235,7 +265,7 @@ class NotificationService {
     final soundEnabled = await _getSoundEnabled();
     final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'med_reminder_default_v2',
+      'med_reminder_default_v3',
       'تذكير بمواعيد الدواء',
       importance: Importance.max,
       priority: Priority.max,
@@ -265,7 +295,7 @@ class NotificationService {
       scheduledDate,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'med_reminder_default_v2',
+          'med_reminder_default_v3',
           'تذكير بمواعيد الدواء',
           importance: Importance.max,
           priority: Priority.max,
@@ -290,7 +320,7 @@ class NotificationService {
       _t('low_stock_body', lang, args: {'remaining': remaining.toString(), 'name': med.name}),
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'med_reminder_default_v2',
+          'med_reminder_default_v3',
           _t('stock_channel', lang),
           importance: Importance.high,
           priority: Priority.high,
@@ -321,8 +351,8 @@ class NotificationService {
 
     // Select channel based on sound
     final String channelId = medication.sound != null
-        ? 'med_reminder_${medication.sound}_v2'
-        : 'med_reminder_default_v2';
+        ? 'med_reminder_${medication.sound}_v3'
+        : 'med_reminder_default_v3';
 
     final androidDetails = AndroidNotificationDetails(
       channelId,
@@ -460,7 +490,8 @@ class NotificationService {
     if (secondsFromAnchorToNow <= 0) {
       intervalsNeeded = 0;
     } else {
-      intervalsNeeded = (secondsFromAnchorToNow / intervalSeconds).ceil();
+      // Use integer division for ceiling (a + b - 1) ~/ b
+      intervalsNeeded = (secondsFromAnchorToNow + intervalSeconds - 1) ~/ intervalSeconds;
     }
 
     tz.TZDateTime current = anchor.add(Duration(seconds: intervalsNeeded * intervalSeconds));
@@ -481,13 +512,13 @@ class NotificationService {
       try {
         await flutterLocalNotificationsPlugin.zonedSchedule(
           notifId,
-          '💊 موعد الدواء: ${medication.name}',
-          'حان وقت تناول جرعة ${medication.dosage}',
+          _t('med_time_title', lang, args: {'name': medication.name}),
+          _t('med_time_body', lang, args: {'dosage': medication.dosage}),
           occ,
           NotificationDetails(
             android: androidDetails,
             iOS: DarwinNotificationDetails(
-              presentSound: true,
+              presentSound: soundEnabled,
               sound: medication.sound != null ? '${medication.sound}.mp3' : null,
               categoryIdentifier: 'med_actions',
             ),

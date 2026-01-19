@@ -45,6 +45,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     {'name': l10n.defaultSound, 'id': 'default', 'icon': '🎵'},
     {'name': l10n.softBell, 'id': 'soft_bell', 'icon': '🔔'},
     {'name': l10n.loudAlarm, 'id': 'loud_alarm', 'icon': '📢'},
+    {'name': l10n.glassPing, 'id': 'glass_ping', 'icon': '🥂'},
+    {'name': l10n.echoChime, 'id': 'echo_chime', 'icon': '🌊'},
+    {'name': l10n.crystalBell, 'id': 'crystal_bell', 'icon': '💎'},
   ];
 
   @override
@@ -98,9 +101,22 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
     try {
       await _audioPlayer.stop();
-      await _audioPlayer.play(AssetSource('sounds/$soundId.mp3'));
+      // Use setPlayerMode for better responsiveness and compatibility on Android
+      await _audioPlayer.setPlayerMode(PlayerMode.lowLatency);
+      
+      // Try playing with the full path if the relative one fails
+      final assetPath = 'sounds/$soundId.mp3';
+      debugPrint('Attempting to play asset: assets/$assetPath');
+      
+      await _audioPlayer.play(AssetSource(assetPath)).catchError((e) {
+        debugPrint('First attempt failed, trying with assets/ prefix: $e');
+        return _audioPlayer.play(AssetSource('assets/$assetPath'));
+      }).catchError((e) {
+        debugPrint('Second attempt failed: $e');
+        return null;
+      });
     } catch (e) {
-      debugPrint('Error playing preview: $e');
+      debugPrint('Unexpected error in _playPreview: $e');
     }
   }
   void _updateNumericValue(TextEditingController controller, double delta, {bool isInt = false}) {
@@ -198,9 +214,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       double dosesAvailable = totalUnits / doseAmount;
       double dosesPerDay = 1.0;
       if (_frequencyType == 'interval') {
-        if (_intervalUnit == 'hours') dosesPerDay = 24.0 / _intervalValue;
-        else if (_intervalUnit == 'minutes') dosesPerDay = (24.0 * 60) / _intervalValue;
-        else if (_intervalUnit == 'days') dosesPerDay = 1.0 / _intervalValue;
+        if (_intervalUnit == 'hours') {
+          dosesPerDay = 24.0 / _intervalValue;
+        } else if (_intervalUnit == 'minutes') {
+          dosesPerDay = (24.0 * 60) / _intervalValue;
+        } else if (_intervalUnit == 'days') {
+          dosesPerDay = 1.0 / _intervalValue;
+        }
       }
       
       int daysUntilDepletion = (dosesAvailable / dosesPerDay).ceil();
@@ -884,7 +904,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             child: Column(
               children: [
                 SwitchListTile(
-                  activeColor: Colors.red,
+                  activeTrackColor: Colors.red.withValues(alpha: 0.5),
+                  activeThumbColor: Colors.red,
                   title: Text(l10n.setEndDate, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(l10n.endDateDesc),
                   value: _hasEndDate,

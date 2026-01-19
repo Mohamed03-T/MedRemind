@@ -20,6 +20,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDate = DateTime.now();
   final CalendarViewMode _mode = CalendarViewMode.days;
   final GlobalKey todayKey = GlobalKey();
+  int _centerRetries = 0;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -27,7 +29,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CalendarProvider>(context, listen: false).loadForMonth(_focusedDate);
       WidgetsBinding.instance.addPostFrameCallback((_) => _centerToday());
+      // Extra delayed attempt in case layout finishes slightly later
+      Future.delayed(const Duration(milliseconds: 300), () => _centerToday());
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _prevMonth() {
@@ -48,16 +58,50 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   void _centerToday() {
     try {
-      final ctx = todayKey.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 400),
-          alignment: 0.5,
-          curve: Curves.easeInOut,
-        );
+      if (!_scrollController.hasClients) {
+        debugPrint('[_centerToday] attempt=$_centerRetries, no clients yet');
+        if (_centerRetries < 12) {
+          _centerRetries++;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Future.delayed(const Duration(milliseconds: 180), () => _centerToday());
+          });
+        }
+        return;
       }
-    } catch (_) {}
+
+      // Calculate grid index for today (independent of render tree)
+      final now = DateTime.now();
+      final first = DateTime(_focusedDate.year, _focusedDate.month, 1);
+      final startWeekday = first.weekday % 7;
+      final todayIndex = startWeekday + (now.day - 1);
+      final row = todayIndex ~/ 3; // 3 columns
+      
+      // Item dimensions based on GridView.count(childAspectRatio: 0.82, crossAxisCount: 3)
+      final screenWidth = MediaQuery.of(context).size.width;
+      final itemWidth = (screenWidth - 16 - 16) / 3; // width - horizontal padding / 3 columns
+      final itemHeight = itemWidth / 0.82; // childAspectRatio = 0.82
+      const itemMargin = 8.0;
+      const verticalPadding = 8.0;
+      final totalItemHeight = itemHeight + 2 * itemMargin;
+      
+      // Calculate scroll offset to center the row vertically
+      final rowStartY = verticalPadding + row * totalItemHeight;
+      final rowCenterY = rowStartY + totalItemHeight / 2;
+      final viewportHeight = MediaQuery.of(context).size.height - kToolbarHeight;
+      final targetOffset = (rowCenterY - viewportHeight / 2).clamp(0.0, _scrollController.position.maxScrollExtent);
+      
+      debugPrint('[_centerToday] todayIndex=$todayIndex, row=$row, itemHeight=$itemHeight, targetOffset=$targetOffset, maxExtent=${_scrollController.position.maxScrollExtent}');
+
+      _scrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeInOut,
+      );
+
+      _centerRetries = 0;
+    } catch (e) {
+      debugPrint('[_centerToday] error: $e');
+    }
   }
 
   @override
@@ -310,6 +354,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Expanded(
               child: GridView.count(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                controller: _scrollController,
                 crossAxisCount: 3,
                 childAspectRatio: 0.82,
                 children: dayWidgets,
